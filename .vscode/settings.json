@@ -1,0 +1,6 @@
+{
+  "color-highlight.markRuler": false,
+  "i18n-ally.localesPaths": ["src/locales"],
+  "i18n-ally.sourceLanguage": "ru",
+  "i18n-ally.keystyle": "nested"
+}
