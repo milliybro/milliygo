@@ -25,6 +25,7 @@ const languages = [
 const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
+  output: 'export',
   webpack: (config) => {
     config.module.rules.push({
       test: /\.d\.ts$/,
