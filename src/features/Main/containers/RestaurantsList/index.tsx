@@ -49,6 +49,8 @@ const FreeDeliveryIcon = () => (
   </svg>
 )
 
+import SkeletonCard from '@/components/common/SkeletonCard'
+
 function RestaurantsList() {
   const [activeCategory, setActiveCategory] = useState<number | null>(null)
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set())
@@ -79,65 +81,50 @@ function RestaurantsList() {
   }
 
   return (
-    <div className="container mb-10 flex flex-col gap-5">
+    <div className="mb-10 flex flex-col gap-6">
       {/* Title */}
-      <Typography.Title level={2} className="!m-0 !text-[22px] !font-bold !text-[#0c0c0c]">
-        Restoranlar
-      </Typography.Title>
+      <div className="container px-4">
+        <h2 className="section-title">Saralangan restoranlar</h2>
+        <p className="section-subtitle">Eng mazali taomlar faqat bizda</p>
+      </div>
 
       {/* Category filter bar */}
       {!categoriesLoading && categoryList.length > 0 && (
-        <>
-          <style>{`.cat-scroll::-webkit-scrollbar{display:none}`}</style>
-          <div className="flex items-center gap-2 rounded-[16px] border border-[#E5E7EB] bg-white px-3 py-2.5">
-            {/* Scroll area */}
-            <div
-              className="cat-scroll flex flex-1 items-center gap-1 overflow-x-auto"
-              style={{ scrollbarWidth: 'none' }}
+        <div className="px-4">
+          <div className="cat-scroll flex items-center gap-3 overflow-x-auto hide-scrollbar pb-1">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`whitespace-nowrap rounded-xl px-4 py-2 text-[14px] font-bold transition-all duration-200 border ${activeCategory === null
+                ? 'bg-[#0c0c0c] border-[#0c0c0c] text-white shadow-md'
+                : 'bg-white border-[#E5E7EB] text-[#374151]'
+                }`}
             >
-              {/* Hammasi */}
+              Hammasi
+            </button>
+
+            {categoryList.map((cat) => (
               <button
-                onClick={() => setActiveCategory(null)}
-                className={`whitespace-nowrap rounded-[10px] px-4 py-1.5 text-[14px] font-semibold transition-all duration-200 ${activeCategory === null
-                  ? 'bg-[#0c0c0c] text-white'
-                  : 'text-[#374151] hover:bg-[#F3F4F6]'
+                key={cat.id}
+                onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                className={`whitespace-nowrap rounded-xl px-4 py-2 text-[14px] font-bold transition-all duration-200 border ${activeCategory === cat.id
+                  ? 'bg-[#0c0c0c] border-[#0c0c0c] text-white shadow-md'
+                  : 'bg-white border-[#E5E7EB] text-[#374151]'
                   }`}
               >
-                Hammasi
+                {cat.name}
               </button>
-
-              {categoryList.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                  className={`whitespace-nowrap rounded-[10px] px-4 py-1.5 text-[14px] font-medium transition-all duration-200 ${activeCategory === cat.id
-                    ? 'bg-[#0c0c0c] text-white font-semibold'
-                    : 'text-[#374151] hover:bg-[#F3F4F6]'
-                    }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-
-              {/* Yana button */}
-              <button className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-[10px] px-4 py-1.5 text-[14px] font-medium text-[#374151] hover:bg-[#F3F4F6]">
-                Yana <ChevronDown />
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="h-6 w-px shrink-0 bg-[#E5E7EB]" />
-
-            {/* Saralash */}
-            <button className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[10px] px-4 py-1.5 text-[14px] font-semibold text-[#0c0c0c] hover:bg-[#F3F4F6]">
-              <FilterIcon />
-              Saralash
-            </button>
+            ))}
           </div>
-        </>
+        </div>
       )}
 
-      {!categoriesLoading && filteredRestaurants.length === 0 ? (
+      {categoriesLoading ? (
+        <div className="container grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 px-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : filteredRestaurants.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#F3F4F6]">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -163,7 +150,7 @@ function RestaurantsList() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="container grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-3 px-4">
           {!categoriesLoading &&
             filteredRestaurants.map((val: IPartner, i: number) => {
               const secureImage = val?.banner?.replace('http://', 'https://')

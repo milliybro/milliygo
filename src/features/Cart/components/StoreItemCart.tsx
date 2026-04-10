@@ -25,9 +25,11 @@ import { createOrder } from '../api'
 const StoreItemCart = ({
     restaurantData,
     restaurantLoading,
+    customLogic,
 }: {
     restaurantData: any
     restaurantLoading: boolean
+    customLogic?: any
 }) => {
     const router = useRouter()
     const { slug: querySlug } = router.query
@@ -36,13 +38,28 @@ const StoreItemCart = ({
     const isAuthenticated = authContext?.authStore?.isAuthenticated
     const openLogin = authContext?.openLogin
 
-    const [comment, setComment] = useState('')
-    const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
-    const [selectedCoords, setSelectedCoords] = useState<number[] | null>(null)
-    const [addressText, setAddressText] = useState('Manzil tanlanmagan')
-    const [paymentMethod, setPaymentMethod] = useState('cash')
-    const [deliveryTime, setDeliveryTime] = useState<string>('Hozir')
-    const [loading, setLoading] = useState(false)
+    // Use logic from props if provided (from CartFullPage), otherwise use local state (legacy/fallback)
+    const [localComment, setLocalComment] = useState('')
+    const [localIsLocationModalOpen, setLocalIsLocationModalOpen] = useState(false)
+    const [localSelectedCoords, setLocalSelectedCoords] = useState<number[] | null>(null)
+    const [localAddressText, setLocalAddressText] = useState('Manzil tanlanmagan')
+    const [localPaymentMethod, setLocalPaymentMethod] = useState('cash')
+    const [localDeliveryTime, setLocalDeliveryTime] = useState<string>('Hozir')
+    const [localLoading, setLocalLoading] = useState(false)
+
+    const comment = customLogic?.comment ?? localComment
+    const setComment = customLogic?.setComment ?? setLocalComment
+    const isLocationModalOpen = customLogic?.isLocationModalOpen ?? localIsLocationModalOpen
+    const setIsLocationModalOpen = customLogic?.setIsLocationModalOpen ?? setLocalIsLocationModalOpen
+    const selectedCoords = customLogic?.selectedCoords ?? localSelectedCoords
+    const setSelectedCoords = customLogic?.setSelectedCoords ?? setLocalSelectedCoords
+    const addressText = customLogic?.addressText ?? localAddressText
+    const setAddressText = customLogic?.setAddressText ?? setLocalAddressText
+    const paymentMethod = customLogic?.paymentMethod ?? localPaymentMethod
+    const setPaymentMethod = customLogic?.setPaymentMethod ?? setLocalPaymentMethod
+    const deliveryTime = customLogic?.deliveryTime ?? localDeliveryTime
+    const setDeliveryTime = customLogic?.setDeliveryTime ?? setLocalDeliveryTime
+    const loading = customLogic?.orderLoading ?? localLoading
 
     // Distance calculation helper
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -78,51 +95,24 @@ const StoreItemCart = ({
 
     const fmt = (n: number) => n.toLocaleString('uz-UZ').replace(/,/g, ' ')
 
-    const handleCreateOrder = async () => {
-        alert('Tugma bosildi! (Start)')
-        
+    const handleCreateOrder = customLogic?.handleCreateOrder ?? (async () => {
         if (!isAuthenticated) {
-            alert('Xatolik: Tizimga kirilmagan!')
             openLogin?.()
             return
         }
         if (!selectedCoords) {
-            alert('Xatolik: Manzil tanlanmagan!')
             message.warning("Iltimos, yetkazib berish manzilini tanlang.")
             setIsLocationModalOpen(true)
             return
         }
 
         const activeStoreId = querySlug as string || Object.keys(carts).find(id => (carts[id].items?.length || 0) > 0)
-        if (!activeStoreId) {
-            alert('Xatolik: Do\'kon (Store) aniqlanmadi!')
-            return
-        }
+        if (!activeStoreId) return
 
-        setLoading(true)
+        setLocalLoading(true)
         try {
             const cartItems = carts[activeStoreId]?.items || []
-            
-            // Check for legacy items without UUID
-            const hasMissingUuid = cartItems.some(item => !item.uuid)
-            if (hasMissingUuid) {
-                alert('Xatolik: Savatda eski mahsulotlar bor! UUID topilmadi.')
-                message.error("Savatchangizda eski mahsulotlar bor. Iltimos, savatni tozalab, mahsulotlarni qayta qo'shing.")
-                setLoading(false)
-                return
-            }
-
-            alert('Request yuborilyapti...')
-            // Get user phone from authState in localStorage
-            const authStateRaw = localStorage.getItem('authState')
-            const authState = authStateRaw ? JSON.parse(authStateRaw) : {}
-            const userPhone = authState?.userInfo?.phone_number || ''
-
-            if (!userPhone) {
-                message.error("Telefon raqami topilmadi. Iltimos, tizimga qayta kiring.")
-                setLoading(false)
-                return
-            }
+            const userPhone = authContext?.authStore?.user?.phone_number || ''
 
             const orderData = {
                 description: comment || "Izoh yo'q",
@@ -138,23 +128,22 @@ const StoreItemCart = ({
 
             const response = await createOrder(orderData)
             
-            if (response?.success) {
+            if (response) {
                 message.success("Buyurtmangiz muvaffaqiyatli qabul qilindi!")
                 clearCart(activeStoreId)
-                const orderUuid = response.data?.uuid
+                const orderUuid = (response as any).uuid
                 if (orderUuid) {
                     router.push(`/orders/${orderUuid}`)
                 } else {
-                    router.push('/')
+                    router.push('/orders')
                 }
             }
         } catch (error: any) {
-            console.error("Order creation failed:", error)
             message.error(error?.response?.data?.message || "Buyurtma berishda xatolik yuz berdi.")
         } finally {
-            setLoading(false)
+            setLocalLoading(false)
         }
-    }
+    })
 
     return (
         <>
@@ -256,7 +245,7 @@ const StoreItemCart = ({
                 </div>
             </div>
 
-            {/* Location Selection Modal */}
+            {/* Location Selection Modal (Desktop Sidebar) */}
             <Modal
                 title={
                     <div className="px-1 py-1">
@@ -290,11 +279,6 @@ const StoreItemCart = ({
                             width="100%" 
                             height="100%"
                             onClick={handleMapClick}
-                            instanceRef={(ref: any) => {
-                                if (ref) {
-                                    ref.behaviors.disable('scrollZoom');
-                                }
-                            }}
                         >
                             <ZoomControl options={{ size: 'small' }} />
                             <GeolocationControl options={{ float: 'left' }} />
@@ -303,54 +287,21 @@ const StoreItemCart = ({
                             {selectedCoords && (
                                 <Placemark 
                                     geometry={selectedCoords} 
-                                    options={{
-                                        preset: 'islands#yellowDotIcon'
-                                    }}
+                                    options={{ preset: 'islands#yellowDotIcon' }}
                                 />
                             )}
                         </Map>
                     </YMaps>
-                    {!selectedCoords && (
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/90 backdrop-blur shadow-md px-4 py-2 rounded-full border border-yellow-200">
-                             <Text className="text-[13px] font-medium text-gray-800">Xaritani bosing va manzilni belgilang</Text>
-                        </div>
-                    )}
                 </div>
             </Modal>
-
+            
             <style jsx global>{`
-                .checkout-select .ant-select-selector {
-                    padding: 0 !important;
-                    height: auto !important;
-                    display: flex !important;
-                    align-items: center !important;
-                }
-                .checkout-select .ant-select-selection-item {
-                    font-size: 16px !important;
-                    font-weight: 700 !important;
-                    color: #111827 !important;
-                    transition: color 0.2s;
-                }
-                .checkout-select:hover .ant-select-selection-item {
-                    color: #FFD600 !important;
-                }
-                .location-modal .ant-modal-content {
-                    overflow: hidden;
-                    border-radius: 24px;
-                }
-                .location-modal .ant-modal-header {
-                    padding: 20px 24px 15px;
-                    border-bottom: 1px solid #f0f0f0;
-                    margin: 0;
-                }
-                .location-modal .ant-modal-footer {
-                    padding: 15px 24px 20px;
-                    border-top: 1px solid #f0f0f0;
-                    margin: 0;
-                }
+                .checkout-select .ant-select-selection-item { font-size: 16px !important; font-weight: 700 !important; color: #111 !important; }
+                .location-modal .ant-modal-content { overflow: hidden; border-radius: 24px; }
             `}</style>
         </>
     )
 }
+
 
 export default StoreItemCart

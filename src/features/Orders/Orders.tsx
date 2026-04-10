@@ -24,82 +24,71 @@ const OrderCard = ({ order }: { order: any }) => {
     const config = statusConfig[order.status] || { label: order.status, color: 'default', icon: null }
     const fmt = (n: any) => Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ')
     
-    // First item's product info for general look
     const firstItem = order.items?.[0]?.product
     const restaurant = firstItem?.partner
 
     return (
-        <div className="bg-white rounded-[24px] border border-gray-100 hover:border-blue-100 p-4 sm:p-5 mb-4 shadow-sm hover:shadow-md transition-all group">
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
+        <div 
+            onClick={() => router.push(`/orders/${order.uuid}`)}
+            className="bg-white rounded-[24px] border border-gray-100 p-4 mb-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-all cursor-pointer"
+        >
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100">
                         <img 
                             src={restaurant?.logo || '/placeholder-logo.png'} 
                             alt={restaurant?.name} 
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <Text className="text-[16px] font-bold text-gray-900 leading-none">
-                                {restaurant?.name || order.partner_name || "Noma'lum maskan"}
-                            </Text>
-                            <RightOutlined className="text-[10px] text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-                        </div>
-                        <Text className="text-[13px] text-gray-400 block mt-1">
-                            №{order.id} • {dayjs(order.created_at).format('DD.MM.YYYY HH:mm')}
+                    <div className="flex flex-col">
+                        <Text className="text-[15px] font-bold text-gray-900 leading-tight">
+                            {restaurant?.name || order.partner_name || "Noma'lum"}
+                        </Text>
+                        <Text className="text-[11px] text-gray-400">
+                            №{order.id} • {dayjs(order.created_at).format('DD.MM.YYYY')}
                         </Text>
                     </div>
                 </div>
                 <Tag 
-                    icon={config.icon} 
                     color={config.color} 
-                    className="m-0 rounded-full px-3 py-0.5 font-medium border-none flex items-center gap-1.5"
+                    className="m-0 rounded-lg px-2 py-0.5 text-[11px] font-bold border-none"
                 >
-                    {config.label}
+                    {config.label.toUpperCase()}
                 </Tag>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-                <div className="flex -space-x-4 overflow-hidden py-1">
-                    {order.items?.slice(0, 3).map((item: any) => (
-                        <div 
-                            key={item.uuid} 
-                            className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-50 overflow-hidden"
-                            title={item.product?.name}
-                        >
-                            <img 
-                                src={item.product?.images?.[0]?.image || '/placeholder-food.png'} 
-                                alt={item.product?.name} 
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                    ))}
-                    {order.items?.length > 3 && (
-                        <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500">
-                            +{order.items.length - 3}
-                        </div>
-                    )}
-                </div>
-                <Text className="text-[14px] text-gray-600 font-medium">
-                    {order.items?.length} ta mahsulot
-                </Text>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                <div className="flex flex-col">
-                    <Text className="text-[12px] text-gray-400">Umumiy summa</Text>
-                    <Text className="text-[17px] font-bold text-blue-600">
-                        {fmt(order.total_price)} <span className="text-[13px] font-bold">UZS</span>
+            <div className="flex items-center justify-between py-3 border-y border-gray-50/50">
+                <div className="flex items-center gap-2">
+                    <div className="flex -space-x-3">
+                        {order.items?.slice(0, 3).map((item: any) => (
+                            <div 
+                                key={item.uuid} 
+                                className="h-7 w-7 rounded-full ring-2 ring-white bg-gray-50 overflow-hidden"
+                            >
+                                <img 
+                                    src={item.product?.images?.[0]?.image || '/placeholder-food.png'} 
+                                    alt="" 
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    <Text className="text-[13px] text-gray-500 font-medium">
+                        {order.items?.length} ta mahsulot
                     </Text>
                 </div>
-                <Button 
-                    type="link" 
-                    className="p-0 h-auto font-bold text-gray-400 hover:text-blue-500 flex items-center gap-1"
-                    onClick={() => router.push(`/orders/${order.uuid}`)}
-                >
-                    Batafsil
-                </Button>
+                <div className="flex flex-col items-end">
+                    <Text className="text-[15px] font-extrabold text-[#111]">
+                        {fmt(order.total_price)} <span className="text-[10px]">UZS</span>
+                    </Text>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-center pt-3">
+                <Text className="text-[13px] font-bold text-blue-600 flex items-center gap-1">
+                    Batafsil ma'lumot <RightOutlined className="text-[10px]" />
+                </Text>
             </div>
         </div>
     )
@@ -119,33 +108,28 @@ const OrderFullPage = () => {
     const renderOrderList = (list: any[]) => {
         if (list.length === 0) {
             return (
-                <div className="py-20 flex flex-col items-center justify-center bg-white rounded-[32px] border border-gray-50 shadow-sm mt-4">
-                    <div className="w-[180px] h-[180px] mb-6 opacity-80">
-                        <Empty 
-                            image={Empty.PRESENTED_IMAGE_SIMPLE} 
-                            description={false} 
-                        />
+                <div className="py-16 flex flex-col items-center justify-center px-6">
+                    <div className="w-24 h-24 mb-6 opacity-20">
+                        <ShoppingOutlined style={{ fontSize: 96, color: '#999' }} />
                     </div>
                     <Text className="text-[18px] font-bold text-gray-900 block mb-2">
-                        Buyurtmalar topilmadi
+                        Buyurtmalar yo'q
                     </Text>
-                    <Text className="text-[14px] text-gray-400 mb-8 max-w-[280px] text-center">
-                        Hali hech qanday buyurtma bermagansiz. Menyu bo'limiga o'ting va o'zingizga yoqqanini tanlang!
+                    <Text className="text-[14px] text-gray-400 mb-8 text-center max-w-[240px]">
+                        Hozircha bu bo'limda hech qanday buyurtma mavjud emas.
                     </Text>
                     <Button 
-                        type="primary" 
-                        size="large" 
-                        className="bg-[#FFD600] border-none text-black font-bold h-12 px-8 rounded-xl hover:!bg-[#FFC800]"
                         onClick={() => router.push('/')}
+                        className="w-full bg-[#111] border-none text-white font-bold h-12 rounded-2xl active:scale-95 transition-all"
                     >
-                        Buyurtma berish
+                        Xarid qilishni boshlash
                     </Button>
                 </div>
             )
         }
 
         return (
-            <div className="max-w-3xl mx-auto pt-4">
+            <div className="pt-2 animate-fade-up">
                 {list.map(order => (
                     <OrderCard key={order.uuid} order={order} />
                 ))}
@@ -154,19 +138,21 @@ const OrderFullPage = () => {
     }
 
     return (
-        <div className="pb-20 mt-8 max-w-5xl mx-auto px-4">
-            <div className="mb-8 text-center sm:text-left">
-                <Title level={2} className="!m-0 text-[32px] font-extrabold tracking-tight text-gray-900">
-                    Mening buyurtmalarim
+        <div className="pb-24 pt-4 min-h-screen">
+            <div className="px-4 mb-6">
+                <Title level={2} className="!m-0 text-[28px] font-extrabold tracking-tight text-gray-900">
+                    Buyurtmalarim
                 </Title>
-                <Text className="text-gray-400 mt-2 block">Sizning barcha faol va o'tgan buyurtmalaringiz shu yerda.</Text>
+                <Text className="text-gray-400 text-[14px]">Barcha buyurtmalaringiz bir joyda</Text>
             </div>
 
-            <main className="min-h-[500px]">
+            <main>
                 {isLoading ? (
-                    <div className="max-w-3xl mx-auto space-y-4 pt-4">
+                    <div className="px-4 space-y-4">
                         {[1, 2, 3].map(i => (
-                            <Skeleton key={i} active avatar paragraph={{ rows: 2 }} className="bg-white p-6 rounded-[24px]" />
+                            <div key={i} className="bg-white p-5 rounded-[24px] border border-gray-50">
+                                <Skeleton active avatar paragraph={{ rows: 2 }} />
+                            </div>
                         ))}
                     </div>
                 ) : (
@@ -178,27 +164,25 @@ const OrderFullPage = () => {
                             {
                                 key: 'active',
                                 label: (
-                                    <div className="flex items-center gap-2 px-3 sm:px-6 h-10">
-                                        <ShoppingOutlined className="text-[14px]" />
+                                    <div className="flex items-center gap-2 px-6 py-2">
                                         <span className="text-[14px]">Joriy</span>
                                         {activeOrders.length > 0 && (
-                                            <span className="bg-[#FFD600] text-black text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full">
+                                            <span className="bg-[#111] text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full">
                                                 {activeOrders.length}
                                             </span>
                                         )}
                                     </div>
                                 ),
-                                children: renderOrderList(activeOrders),
+                                children: <div className="px-4">{renderOrderList(activeOrders)}</div>,
                             },
                             {
                                 key: 'history',
                                 label: (
-                                    <div className="flex items-center gap-2 px-3 sm:px-6 h-10">
-                                        <ClockCircleOutlined className="text-[14px]" />
+                                    <div className="flex items-center gap-2 px-6 py-2">
                                         <span className="text-[14px]">Tarix</span>
                                     </div>
                                 ),
-                                children: renderOrderList(historyOrders),
+                                children: <div className="px-4">{renderOrderList(historyOrders)}</div>,
                             },
                         ]}
                     />
@@ -207,42 +191,41 @@ const OrderFullPage = () => {
 
             <style jsx global>{`
                 .orders-pill-tabs .ant-tabs-nav {
-                    margin-bottom: 24px !important;
-                    display: inline-flex !important;
-                    width: auto !important;
-                    margin-left: auto !important;
-                    margin-right: auto !important;
+                    margin-bottom: 20px !important;
+                    background: transparent !important;
                 }
                 .orders-pill-tabs .ant-tabs-nav-wrap {
-                    background: #F1F3F5;
+                    display: flex;
+                    justify-content: center;
+                    background: #f3f3f3;
+                    margin: 0 16px;
+                    border-radius: 16px;
                     padding: 4px;
-                    border-radius: 14px;
                 }
                 .orders-pill-tabs .ant-tabs-nav-list {
                     width: 100%;
+                    display: flex;
                 }
                 .orders-pill-tabs .ant-tabs-tab {
-                    padding: 0 !important;
+                    flex: 1;
+                    justify-content: center;
                     margin: 0 !important;
-                    transition: all 0.3s;
-                    border-radius: 11px;
+                    padding: 0 !important;
+                    border-radius: 12px;
+                    transition: all 0.2s;
                 }
                 .orders-pill-tabs .ant-tabs-tab-active {
                     background: white;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
                 }
                 .orders-pill-tabs .ant-tabs-ink-bar {
-                    display: none !important;
+                    display: none;
                 }
                 .orders-pill-tabs .ant-tabs-tab-btn {
-                    color: #4B5563 !important;
-                    font-weight: 500 !important;
+                    color: #888 !important;
+                    font-weight: 600 !important;
                 }
                 .orders-pill-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-                    color: #111 !important;
-                    font-weight: 700 !important;
-                }
-                .orders-pill-tabs .ant-tabs-tab:hover {
                     color: #111 !important;
                 }
             `}</style>

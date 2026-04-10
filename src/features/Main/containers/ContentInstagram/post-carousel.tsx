@@ -25,13 +25,12 @@ export default function HeroCarousel() {
   const banners = adsBanners?.data || []
 
   return (
-    <div className="container relative mb-4 mt-2">
+    <div className="relative mb-4 mt-2">
       <Carousel
         ref={carouselRef}
-        dots={false}
-        effect="fade"
-        className="mt-2 overflow-hidden rounded-[20px] bg-white [&_.slick-track]:!gap-0"
-        slidesPerRow={1}
+        dots={true}
+        dotPosition="bottom"
+        className="mt-2 overflow-hidden rounded-[24px] bg-white group"
         autoplay
         autoplaySpeed={5000}
       >
@@ -40,35 +39,41 @@ export default function HeroCarousel() {
           const href = `/store/${partner?.uuid}?id=${partner?.id}`
 
           return (
-            <div key={banner.id}>
-              <Link href={href}>
-                <LazyLoadImage
-                  className="h-[350px] w-full object-cover"
-                  src={banner.image.replace('http://', 'https://')}
-                  alt={banner.title}
-                />
+            <div key={banner.id} className="relative">
+              <Link href={href} className="block w-full">
+                <div className="relative overflow-hidden rounded-[24px]">
+                  <LazyLoadImage
+                    className="h-[200px] md:h-[350px] w-full object-cover"
+                    src={banner.image.replace('http://', 'https://')}
+                    alt={banner.title}
+                  />
+                  {/* Subtle Gradient Overlay for Premium Look */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:hidden" />
+                </div>
               </Link>
             </div>
           )
         })}
       </Carousel>
 
+      {/* Modern Floating Controls - Hidden on very small screens, visible on hover for desktop */}
       {!adsBannersLoading && banners.length > 1 && (
-        <div className="absolute bottom-4 right-48 z-10 flex items-center gap-3 dsm:-top-56">
+        <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 z-10 hidden md:flex items-center justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white transition-all hover:bg-gray-200 hover:shadow-lg"
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow-md transition-all hover:bg-white active:scale-90"
             onClick={() => carouselRef.current?.prev()}
           >
-            <ArrowLeftIcon2 className="-translate-x-[2px]" />
+            <ArrowLeftIcon2 className="w-5 h-5 -translate-x-[1px]" />
           </button>
           <button
-            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white transition-all hover:bg-gray-200 hover:shadow-lg"
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow-md transition-all hover:bg-white active:scale-90"
             onClick={() => carouselRef.current?.next()}
           >
-            <ArrowRightIcon2 className="translate-x-[2px]" />
+            <ArrowRightIcon2 className="w-5 h-5 translate-x-[1px]" />
           </button>
         </div>
       )}
     </div>
   )
 }
+

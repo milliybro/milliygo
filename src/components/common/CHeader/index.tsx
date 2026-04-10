@@ -273,23 +273,25 @@ const CHeader = () => {
             </div>
           </div>
 
-          {/* Mobile search */}
-          <div className="lg:hidden pb-3">
-            <div className={`flex items-center rounded-2xl px-4 py-[10px] transition-all duration-200 ${searchFocused
-              ? 'bg-white ring-[1.5px] ring-[#111] shadow-[0_4px_16px_rgba(0,0,0,0.05)]'
-              : 'bg-[#f5f4f1]'
-              }`}>
-              <SearchOutlined className={`text-[14px] mr-3 flex-shrink-0 transition-colors duration-200 ${searchFocused ? 'text-[#111]' : 'text-[#bbb]'
-                }`} />
-              <input
-                type="text"
-                placeholder="Restoran yoki taom qidiring..."
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                className="bg-transparent border-none outline-none w-full text-[13.5px] text-[#111] placeholder-[#bbb] font-[450]"
-              />
+          {/* Mobile search - Hidden on Home page fixed search */}
+          {router.pathname !== '/' && (
+            <div className="lg:hidden pb-3">
+              <div className={`flex items-center rounded-2xl px-4 py-[10px] transition-all duration-200 ${searchFocused
+                ? 'bg-white ring-[1.5px] ring-[#111] shadow-[0_4px_16px_rgba(0,0,0,0.05)]'
+                : 'bg-[#f5f4f1]'
+                }`}>
+                <SearchOutlined className={`text-[14px] mr-3 flex-shrink-0 transition-colors duration-200 ${searchFocused ? 'text-[#111]' : 'text-[#bbb]'
+                  }`} />
+                <input
+                  type="text"
+                  placeholder="Restoran yoki taom qidiring..."
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  className="bg-transparent border-none outline-none w-full text-[13.5px] text-[#111] placeholder-[#bbb] font-[450]"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

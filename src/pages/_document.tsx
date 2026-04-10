@@ -21,6 +21,7 @@ const MyDocument = ({ locale }: DocumentContext) => {
           type="text/javascript"
           strategy="afterInteractive"
         />
+        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </Head>
       <body className={excludedLocales?.includes(locale || '') ? 'notranslate' : 'translate'}>
         <Main />

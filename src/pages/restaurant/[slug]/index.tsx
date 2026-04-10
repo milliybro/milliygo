@@ -34,7 +34,7 @@ const StoreItemPage = () => {
   ]
 
   return (
-    <main className="bg-white">
+    <main className="bg-white mb-20">
       <div className="container">
       {/* <CBreadcrumb items={breadCrumbItems} /> */}
       <StoreItem />

@@ -110,11 +110,11 @@ const RestaurantItem = () => {
 
       {/* Mobile Cart Bar (visible when main cart is hidden) */}
       {subtotal > 0 && (
-        <div className="xl:hidden fixed bottom-6 left-4 right-4 z-50">
+        <div className="xl:hidden fixed bottom-20 left-4 right-4 z-50">
           <button
             onClick={() => {
               if (isAuthenticated) {
-                router.push(`/checkout?store=${slug}`)
+                router.push(`/cart`)
               } else {
                 openLogin?.()
               }

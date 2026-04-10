@@ -1336,3 +1336,148 @@ input[type='number'] {
   border-radius: 8px !important;
   overflow: hidden !important;
 }
+
+/* --- Premium Mobile & Telegram Optimization --- */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: #fafafa;
+  overflow-x: hidden;
+}
+
+.tma-container {
+  background-color: var(--tg-theme-bg-color, #ffffff);
+  color: var(--tg-theme-text-color, #232e40);
+}
+
+.pb-safe-area {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Glassmorphism for Bottom Nav */
+.md\:hidden.fixed.bottom-0 {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Mobile-first card enhancements */
+.mobile-card {
+  @apply bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[#efefed];
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-card:active {
+  transform: scale(0.98);
+}
+
+/* Telegram Native Theme Colors */
+:root {
+  --primary: #3272ff;
+  --bg-color: #ffffff;
+  --text-color: #232e40;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tma-container {
+    --bg-color: var(--tg-theme-bg-color, #1c1c1d);
+    --text-color: var(--tg-theme-text-color, #ffffff);
+  }
+}
+
+/* Smooth Page Transitions Shimmer */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Custom Scrollbar for premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
+
+/* Fix for Telegram Mini App viewport height */
+.tma-container main {
+  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* Premium Typography & Spacing */
+.section-title {
+  @apply text-[22px] font-extrabold tracking-tight text-[#0c0c0c] mb-2;
+}
+
+.section-subtitle {
+  @apply text-[14px] text-[#6B7280] mb-4;
+}
+
+/* Modern Card Styles */
+.premium-card {
+  @apply bg-white rounded-3xl transition-all duration-300;
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+}
+
+.premium-card:active {
+  @apply scale-[0.98] duration-150;
+}
+
+/* Horizontal Scroll for Categories */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Floating Search Bar Style */
+.floating-search {
+  @apply sticky top-4 z-40 mx-4 flex items-center gap-3 rounded-2xl border border-white bg-white/70 px-4 py-3 backdrop-blur-xl shadow-lg transition-all duration-300;
+}
+
+/* Glassmorphism Variants */
+.glass-effect {
+  @apply bg-white/80 backdrop-blur-lg border border-white/20;
+}
+
+/* Animation Utilities */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease-out forwards;
+}
+

@@ -2,18 +2,23 @@ import { useRouter } from 'next/router'
 
 import CFooter from './CFooter'
 import CHeader from './CHeader'
+import BottomNavigation from './BottomNavigation'
 
 import { getAccountMe } from '@/features/Account/api'
-import { useContext, useEffect, type FC, type ReactNode } from 'react'
+import { useContext, useEffect, type FC, type ReactNode, useState } from 'react'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
 import { setCookie } from 'cookies-next'
 import { Accessibility } from 'accessibility'
 import { useTranslations } from 'next-intl'
+import { useTelegram } from '@/hooks/useTelegram'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
   const { pathname } = useRouter()
   const authContext = useContext(AuthContext)
+  const { tg } = useTelegram()
+  const [isMobile, setIsMobile] = useState(false)
+
   const authStore = authContext?.authStore as {
     isAuthenticated: boolean
 
@@ -21,6 +26,10 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     userInfo: object
   }
   const { login: loginAction, isAuthenticated } = authStore
+
+  useEffect(() => {
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
+  }, [])
 
   useEffect(() => {
     isAuthenticated &&
@@ -92,11 +101,17 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return children
   }
 
+  // If in Telegram, we might want to hide the header/footer and only use native components
+  const isTma = !!tg
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <CHeader />
-      {children}
-      <CFooter />
+    <div className={`flex min-h-screen flex-col ${isMobile ? 'tma-container' : ''}`}>
+      {!isMobile && <CHeader />}
+      <main className={`flex-grow ${isMobile ? 'pb-20' : 'container'}`}>
+        {children}
+      </main>
+      {!isMobile && <CFooter />}
+      {isMobile && <BottomNavigation />}
     </div>
   )
 }

@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useCartStore } from '@/store/cartStore'
 import { CloseOutlined, MinusOutlined, PlusOutlined, ShoppingOutlined } from '@ant-design/icons'
+import Link from 'next/link'
 
 interface CartDetailProps {
   restaurantData: any
@@ -51,7 +52,7 @@ const CartDetail = ({ restaurantData, restaurantLoading }: CartDetailProps) => {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 animate-fade-up">
       {activeStoreIds.map(storeId => {
         const cartData = carts[storeId]
         const currentCartItems = cartData?.items || []
@@ -60,84 +61,82 @@ const CartDetail = ({ restaurantData, restaurantLoading }: CartDetailProps) => {
         if (currentCartItems.length === 0) return null
 
         return (
-          <div key={storeId} className="space-y-4">
-            {/* Restaurant Header */}
-            <div className="bg-white p-5 rounded-[20px] border border-[#f0f0f0] shadow-sm">
-              <Typography.Text className="text-[13px] text-gray-400 font-medium block mb-1 uppercase tracking-wider">
-                Buyurtma qilinayotgan restoran
-              </Typography.Text>
-              <Typography.Title level={4} className="!m-0 !text-[20px] font-bold text-gray-900">
-                {/* 
-                   If we are viewing a specific restaurant, use its data. 
-                   Otherwise, use the stored restaurant data.
-                */}
-                {querySlug === storeId 
-                   ? (restaurantData?.data?.partner?.name || cartRestaurant?.name || 'Restoran') 
-                   : (cartRestaurant?.name || `Restoran (ID: ${storeId.slice(0, 8)}...)`)}
-              </Typography.Title>
+          <div key={storeId} className="space-y-3">
+            {/* Store Name & Action */}
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#FFD600] rounded-full" />
+                <span className="text-[17px] font-extrabold text-[#111]">
+                  {cartRestaurant?.name || 'Hamkor do\'kon'}
+                </span>
+              </div>
+              <Link 
+                 href={`/restaurant/${cartRestaurant?.uuid || storeId}`}
+                 className="text-[13px] font-bold text-[#00D166] bg-[#00D166]/10 px-3 py-1 rounded-full active:scale-95 transition-all"
+              >
+                + Qo'shish
+              </Link>
             </div>
 
-            {/* Cart Items */}
+            {/* Cart Items Cards */}
             <div className="space-y-3">
               {currentCartItems.map((item: any) => (
                 <div 
                   key={item.id} 
-                  className="group relative bg-white p-4 pr-5 rounded-[24px] border border-[#f0f0f0] shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-5"
+                  className="bg-white rounded-[28px] p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50 flex items-center gap-4 relative"
                 >
-                  {/* Remove Button */}
+                  {/* Remove Button - Top Right */}
                   <button 
                     onClick={() => removeItem(storeId, item.id)}
-                    className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all z-10"
+                    className="absolute -top-1 -right-1 w-7 h-7 bg-white shadow-md border border-gray-100 flex items-center justify-center rounded-full text-gray-400 active:scale-90 z-10"
                   >
-                    <CloseOutlined style={{ fontSize: 13 }} />
+                    <CloseOutlined style={{ fontSize: 10 }} />
                   </button>
 
-                  {/* Product Image */}
-                  <div className="relative w-[110px] h-[110px] rounded-2xl overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100">
-                    <Image
+                  {/* Image with subtle shadow */}
+                  <div className="relative w-[90px] h-[90px] rounded-[22px] overflow-hidden bg-gray-50 shadow-inner">
+                    <img
                       src={item.image}
                       alt={item.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="110px"
+                      className="w-full h-full object-cover"
                     />
                   </div>
 
-                  {/* Item Details */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch py-1">
+                  {/* Content */}
+                  <div className="flex-1 flex flex-col justify-between self-stretch py-0.5 min-w-0">
                     <div>
-                      <Typography.Title level={5} className="!m-0 !text-[18px] font-bold text-gray-900 truncate">
+                      <h4 className="text-[15px] font-bold text-[#111] leading-tight truncate pr-4">
                         {item.name}
-                      </Typography.Title>
-                      <Typography.Text className="text-[14px] text-gray-500 mt-1 block">
-                        1 x {item.price.toLocaleString('uz-UZ').replace(/,/g, ' ')} so'm
-                      </Typography.Text>
+                      </h4>
+                      <p className="text-[12px] text-gray-400 font-medium mt-0.5">
+                        {item.price.toLocaleString('uz-UZ').replace(/,/g, ' ')} UZS / dona
+                      </p>
                     </div>
 
                     <div className="flex items-center justify-between mt-auto">
-                      {/* Total Item Price */}
-                      <Typography.Text className="text-[17px] font-bold text-gray-900 order-2">
-                        {(item.price * item.quantity).toLocaleString('uz-UZ').replace(/,/g, ' ')} so'm
-                      </Typography.Text>
+                      {/* Price Tag */}
+                      <span className="text-[16px] font-black text-[#111]">
+                        {(item.price * item.quantity).toLocaleString('uz-UZ').replace(/,/g, ' ')} <span className="text-[10px] font-bold">UZS</span>
+                      </span>
 
-                      {/* Quantity Controls */}
-                      <div className="flex items-center bg-[#F8F8F8] rounded-[16px] p-1 order-1">
+                      {/* Pill Style Quantity Control */}
+                      <div className="flex items-center bg-[#F5F5F7] rounded-full p-1 border border-gray-100">
                         <button
                           onClick={() => updateQuantity(storeId, item.id, item.quantity - 1)}
-                          className="w-10 h-10 flex items-center justify-center bg-white rounded-[14px] border border-[#f0f0f0] text-gray-600 hover:bg-gray-50 active:scale-95 transition-all shadow-sm"
+                          className="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-900 active:scale-90 transition-all"
                         >
-                          <MinusOutlined style={{ fontSize: 12 }} />
+                          <MinusOutlined style={{ fontSize: 10 }} />
                         </button>
                         
-                        <span className="w-10 text-center text-[15px] font-bold text-gray-900">
+                        <span className="w-8 text-center text-[13px] font-black text-[#111]">
                           {item.quantity}
                         </span>
                         
                         <button
                           onClick={() => updateQuantity(storeId, item.id, item.quantity + 1)}
-                          className="w-10 h-10 flex items-center justify-center bg-white rounded-[14px] border border-[#FFD600] text-gray-900 hover:bg-[#FFF9DB] active:scale-95 transition-all shadow-sm"
+                          className="w-8 h-8 flex items-center justify-center bg-[#FFD600] rounded-full shadow-sm text-black active:scale-90 transition-all"
                         >
-                          <PlusOutlined style={{ fontSize: 12 }} />
+                          <PlusOutlined style={{ fontSize: 10 }} />
                         </button>
                       </div>
                     </div>
@@ -149,6 +148,8 @@ const CartDetail = ({ restaurantData, restaurantLoading }: CartDetailProps) => {
         )
       })}
     </div>
+
+
   )
 }
 
