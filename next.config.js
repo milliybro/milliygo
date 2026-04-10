@@ -21,11 +21,11 @@ const languages = [
   { title: 'Azərbaycan', name: 'az' },
 ]
 
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
-  output: 'export',
+  output: 'export', // ✅ qoladi
+
   webpack: (config) => {
     config.module.rules.push({
       test: /\.d\.ts$/,
@@ -38,70 +38,22 @@ const nextConfig = {
     HELLO: 'configdev',
     GOOGLE_TRANSLATION_CONFIG: JSON.stringify({
       languages,
-      // defaultLanguage: 'uz',
     }),
   },
 
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'file.sayohat.uz',
-        // pathname: '/buckets/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'zos.alipayobjects.com',
-        // port: '',
-        // pathname: '/account123/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'gw.alipayobjects.com',
-      },
-      {
-        protocol: 'http',
-        hostname: 'api.museums.uz',
-      },
-      {
-        protocol: 'https',
-        hostname: 'os.alipayobjects.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.emehmon.xdevs.uz',
-      },
-      {
-        protocol: 'http',
-        hostname: 'api.emehmon.xdevs.uz',
-      },
-      {
-        protocol: 'https',
-        hostname: 'static-maps.yandex.ru',
-      },
-      {
-        protocol: 'http',
-        hostname: 'support.emehmon.xdevs.uz',
-      },
-      {
-        protocol: 'https',
-        hostname: 'template.em.xdevs.uz',
-      },
-      {
-        protocol: 'https',
-        hostname: '***',
-      },
-      {
-        protocol: 'http',
-        hostname: '***',
-      },
+      { protocol: 'https', hostname: 'file.sayohat.uz' },
+      { protocol: 'https', hostname: 'zos.alipayobjects.com' },
+      { protocol: 'https', hostname: 'gw.alipayobjects.com' },
+      { protocol: 'http', hostname: 'api.museums.uz' },
+      { protocol: 'https', hostname: 'os.alipayobjects.com' },
+      { protocol: 'https', hostname: 'api.emehmon.xdevs.uz' },
+      { protocol: 'http', hostname: 'api.emehmon.xdevs.uz' },
+      { protocol: 'https', hostname: 'static-maps.yandex.ru' },
+      { protocol: 'http', hostname: 'support.emehmon.xdevs.uz' },
+      { protocol: 'https', hostname: 'template.em.xdevs.uz' },
     ],
-  },
-
-  i18n: {
-    locales: languages.map((val) => val.name),
-    defaultLocale: 'uz',
-    localeDetection: false,
   },
 
   transpilePackages: [
