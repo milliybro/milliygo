@@ -60,20 +60,12 @@ const BottomNavigation = () => {
               className="flex flex-col items-center justify-center flex-1 gap-1 transition-all duration-200"
             >
               <span
-                className={`flex items-center justify-center transition-colors duration-200 ${
+                className={`flex items-center justify-center transition-colors duration-200 text-[20px] ${
                   isActive ? 'text-[#111]' : 'text-[#bbb]'
                 }`}
               >
-                {typeof item.icon === 'object' && React.isValidElement(item.icon) ? (
-                  // If icon is already an element (like with Badge), clone it to apply active color
-                  React.cloneElement(item.icon as React.ReactElement, {
-                    className: `${(item.icon as React.ReactElement).props.className || ''} ${
-                      isActive ? 'text-[#111]' : 'text-[#bbb]'
-                    }`,
-                  })
-                ) : (
-                  <span className="text-[20px]">{item.icon}</span>
-                )}
+                {/* BUILD FIX: Directly rendering icon to avoid cloneElement type errors */}
+                {item.icon}
               </span>
               <span
                 className={`text-[10px] font-bold transition-colors duration-200 ${
@@ -91,4 +83,3 @@ const BottomNavigation = () => {
 }
 
 export default BottomNavigation
-

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useHasHydrated } from '@/features/FindATaxi/hooks/useHasHydrated'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 import Script from 'next/script'
 
 export default function WWWUzTracker() {

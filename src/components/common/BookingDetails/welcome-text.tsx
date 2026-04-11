@@ -1,4 +1,4 @@
-import { useHasHydrated } from '@/features/FindATaxi/hooks/useHasHydrated'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { Typography } from 'antd'
 import { useTranslations } from 'next-intl'
 

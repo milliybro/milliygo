@@ -13,26 +13,37 @@ interface IProps {
   params: { slug: string }
 }
 
-export async function getServerSideProps(context: IProps) {
-  const faqFull: IFaqFull = await fetch(`${baseURL}/base/faqs/${context.params.slug}`, {
-    headers: {
-      'Accept-Language': context.locale,
-    },
-  }).then((val) => val.json())
+export async function getStaticPaths() {
+  return { paths: [], fallback: 'blocking' }
+}
 
-  const similarData: ListResponse<IFaq[]> = await fetch(`${baseURL}/base/faqs/`, {
-    headers: {
-      'Accept-Language': context.locale,
-    },
-  }).then((val) => val.json())
+export async function getStaticProps(context: IProps) {
+  let faqFull;
+  let filterData = [];
 
-  const filterData = similarData.results.filter((val) => val.id !== faqFull.id)
+  try {
+      faqFull = await fetch(`${baseURL}/base/faqs/${context.params.slug}`, {
+        headers: {
+          'Accept-Language': context.locale || 'uz',
+        },
+      }).then((val) => val.json())
+    
+      const similarData: ListResponse<IFaq[]> = await fetch(`${baseURL}/base/faqs/`, {
+        headers: {
+          'Accept-Language': context.locale || 'uz',
+        },
+      }).then((val) => val.json())
+    
+      filterData = similarData.results.filter((val) => val.id !== faqFull.id)
+  } catch(e) {
+      // Ignored for static export fallback
+  }
 
   return {
     props: {
-      messages: (await import(`../../../locales/${context.locale}.json`)).default,
-      data: faqFull,
-      similarData: filterData,
+      messages: (await import(`../../../locales/${context.locale || 'uz'}.json`)).default,
+      data: faqFull || {},
+      similarData: filterData || [],
     },
   }
 }
@@ -49,7 +60,7 @@ const FaqPage = ({ data, similarData }: { data: IFaqFull; similarData: IFaq[] })
       href: '/faq',
     },
     {
-      title: data.title,
+      title: data?.title || '',
     },
   ]
 

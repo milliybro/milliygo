@@ -1,5 +1,5 @@
 import { Typography } from 'antd'
-import { useHasHydrated } from '@/features/FindATaxi/hooks/useHasHydrated'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { useTranslations } from 'next-intl'
 
 interface IProps {

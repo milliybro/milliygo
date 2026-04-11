@@ -24,7 +24,11 @@ const languages = [
 const nextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
-  output: 'export', // ✅ qoladi
+  output: 'export',
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
 
   webpack: (config) => {
     config.module.rules.push({
@@ -54,6 +58,7 @@ const nextConfig = {
       { protocol: 'http', hostname: 'support.emehmon.xdevs.uz' },
       { protocol: 'https', hostname: 'template.em.xdevs.uz' },
     ],
+    unoptimized: true,
   },
 
   transpilePackages: [

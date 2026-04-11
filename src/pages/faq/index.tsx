@@ -10,12 +10,14 @@ interface IProps {
   defaultLocale: string
 }
 
-export async function getServerSideProps(context: IProps) {
-  return {
-    props: {
-      messages: (await import(`../../locales/${context.locale}.json`)).default,
-    },
+export async function getStaticProps(context: any) {
+  let messages = {};
+  if (context && context.locale) {
+      messages = (await import(`../../locales/${context.locale}.json`)).default;
+  } else {
+      messages = (await import(`../../locales/uz.json`)).default;
   }
+  return { props: { messages } }
 }
 
 const FaqPage = () => {

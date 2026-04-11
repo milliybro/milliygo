@@ -4,7 +4,8 @@ import CBreadcrumb from '@/components/common/CBreadcrumb'
 import Faq from '@/features/Faq'
 import { useTranslations } from 'next-intl'
 import StoreList from '@/features/Stores/StoreList'
-import CartFullPage from '@/features/Cart/Cart'
+import dynamic from 'next/dynamic'
+const CartFullPage = dynamic(() => import('@/features/Cart/Cart'), { ssr: false })
 
 interface IProps {
   locales: string[]
@@ -12,12 +13,14 @@ interface IProps {
   defaultLocale: string
 }
 
-export async function getServerSideProps(context: IProps) {
-  return {
-    props: {
-      messages: (await import(`../../locales/${context.locale}.json`)).default,
-    },
+export async function getStaticProps(context: any) {
+  let messages = {};
+  if (context && context.locale) {
+      messages = (await import(`../../locales/${context.locale}.json`)).default;
+  } else {
+      messages = (await import(`../../locales/uz.json`)).default;
   }
+  return { props: { messages } }
 }
 
 const CartPage = () => {

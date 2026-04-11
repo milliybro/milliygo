@@ -1,6 +1,6 @@
 import { BreadcrumbProps, Card, Col, Divider, Menu, MenuProps, Row } from 'antd'
 import { useTranslations } from 'next-intl'
-import { usePathname } from 'next/navigation'
+
 import { useRouter } from 'next/router'
 import type { ReactElement, ReactNode } from 'react'
 import { useRef } from 'react'
@@ -22,8 +22,8 @@ interface IProps {
 export default function ContractLayout({ breadCrumbItems, children }: IProps): ReactElement {
   const menuRef = useRef(null)
   const router = useRouter()
-  const pathname = usePathname()
-  const activeTab = pathname.slice(0, -1)
+  const pathname = router.pathname || ''
+  const activeTab = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname
   const t = useTranslations()
 
   let defaultItems: MenuProps['items'] = [
