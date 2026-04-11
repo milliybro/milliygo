@@ -41,7 +41,7 @@ const Faq = () => {
   const clickHandler = (slug: string) => () => {
     router.push(`/faq/${slug}`)
   }
-
+// dsd
   return (
     <Flex vertical>
       <Card variant="borderless" styles={{ body: { padding: 16 } }} className="mb-6 rounded-2xl">
