@@ -6,7 +6,7 @@ import Head from 'next/head'
 export async function getStaticPaths() {
     return {
         paths: [],
-        fallback: true,
+        fallback: false,
     }
 }
 
@@ -16,13 +16,14 @@ export async function getStaticProps(context: any) {
     }
 }
 
+import { useHasHydrated } from '@/hooks/useHasHydrated'
+
 const OrderTrackingPage = () => {
     const router = useRouter()
     const { uuid } = router.query
+    const hasHydrated = useHasHydrated()
 
-    if (router.isFallback) {
-        return <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">Yuklanmoqda...</div>
-    }
+    if (!hasHydrated) return null
 
     return (
         <>

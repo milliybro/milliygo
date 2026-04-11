@@ -115,14 +115,14 @@ const CHeader = () => {
             {/* Right */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3.5">
-                <a href="#" aria-label="Telegram" className="text-[#229ED9] transition-colors duration-150">
-                  <Image src={telegram} alt="Telegram" width={20} height={20} style={{ width: 'auto', height: 'auto' }} />
+                <a href="#" aria-label="Telegram" className="hover:opacity-80 transition-opacity">
+                  <Image src={telegram} alt="Telegram" width={18} height={18} className="object-contain" />
                 </a>
-                <a href="#" aria-label="Facebook" className="text-[#1877F2] transition-colors duration-150">
-                  <Image src={facebook} alt="Facebook" width={20} height={20} style={{ width: 'auto', height: 'auto' }} />
+                <a href="#" aria-label="Facebook" className="hover:opacity-80 transition-opacity">
+                  <Image src={facebook} alt="Facebook" width={18} height={18} className="object-contain" />
                 </a>
-                <a href="https://www.instagram.com/milliyapp/" aria-label="Instagram" className="text-[#E4405F] transition-colors duration-150">
-                  <Image src={instagram} alt="Instagram" width={20} height={20} style={{ width: 'auto', height: 'auto' }} />
+                <a href="https://www.instagram.com/milliyapp/" aria-label="Instagram" className="hover:opacity-80 transition-opacity">
+                  <Image src={instagram} alt="Instagram" width={18} height={18} className="object-contain" />
                 </a>
               </div>
               <div className="w-px h-3 bg-[#e5e5e3]" />
@@ -149,14 +149,13 @@ const CHeader = () => {
               <Link href="/" className=" flex items-center gap-2 flex-shrink-0 hover:opacity-70 transition-opacity duration-200 active:scale-95">
                 <Image
                   priority
-                  width={48}
-                  height={16}
+                  width={34}
+                  height={34}
                   src={logo}
                   alt="MilliyGo"
-                  className="object-contain"
-                  style={{ width: 'auto', height: 'auto' }}
+                  className="object-contain rounded-lg shadow-sm"
                 />
-                <Typography.Text className='pacifico-regular  text-[20px] font-bold'>MilliyGo</Typography.Text>
+                <Typography.Text className='pacifico-regular text-[20px] font-bold tracking-tight text-[#111]'>MilliyGo</Typography.Text>
               </Link>
 
               {/* Search */}

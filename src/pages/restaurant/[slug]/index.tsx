@@ -2,8 +2,22 @@ import CBreadcrumb from '@/components/common/CBreadcrumb'
 import { useTranslations } from 'next-intl'
 import StoreItem from '@/features/StoreItem/StoreItem'
 
+import { baseURL } from '@/utils/axios'
+
 export async function getStaticPaths() {
-  return { paths: [], fallback: 'blocking' }
+  try {
+    const res = await fetch(`${baseURL}/partner/?partner_type=RESTAURANT`).then(v => v.json());
+    const partners = res?.data?.partners || res?.results || [];
+    
+    const paths = partners.map((p: any) => ({
+      params: { slug: p.uuid || p.id.toString() }
+    }));
+
+    return { paths, fallback: false }
+  } catch (error) {
+    console.error("Failed to fetch restaurant paths:", error);
+    return { paths: [], fallback: false }
+  }
 }
 
 export async function getStaticProps(context: any) {
@@ -20,28 +34,17 @@ export async function getStaticProps(context: any) {
   return { props: { messages } }
 }
 
+import { useHasHydrated } from '@/hooks/useHasHydrated'
+
 const StoreItemPage = () => {
   const t = useTranslations()
-  const breadCrumbItems = [
-    {
-      title: t('preferences.main'),
-      href: '/',
-    },
-    {
-      title: "Do'konlar",
-      href: '/store',
-    },
-    {
-      title: 'Batafsil',
-    },
-  ]
+  const hasHydrated = useHasHydrated()
+  
+  if (!hasHydrated) return null
 
   return (
-    <main className="bg-white mb-20">
-      <div className="container">
-      {/* <CBreadcrumb items={breadCrumbItems} /> */}
+    <main className="bg-white mb-20 px-0">
       <StoreItem />
-      </div>
     </main>
   )
 }

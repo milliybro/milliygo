@@ -68,7 +68,7 @@ const RestaurantItem = () => {
   const openLogin = authContext?.openLogin
 
   return (
-    <div className="container mx-auto px-4 pb-20 mt-4 relative">
+    <div className="max-w-[1440px] mx-auto px-4 pb-20 mt-4 relative">
       {/* Header section */}
       <div className="mb-6">
         <Typography.Title level={2} className="!m-0 text-[24px] lg:text-[32px] font-bold text-gray-900">
