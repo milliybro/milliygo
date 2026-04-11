@@ -14,42 +14,55 @@ interface IProps {
 }
 
 export async function getStaticPaths() {
-  return { paths: [], fallback: 'blocking' }
+  return { paths: [], fallback: false }
 }
 
-export async function getStaticProps(context: IProps) {
-  let faqFull;
-  let filterData = [];
+export async function getStaticProps(context: any) {
+  let faqFull = {};
+  let filterData: any[] = [];
+  const locale = context.locale || 'uz';
 
   try {
       faqFull = await fetch(`${baseURL}/base/faqs/${context.params.slug}`, {
         headers: {
-          'Accept-Language': context.locale || 'uz',
+          'Accept-Language': locale,
         },
       }).then((val) => val.json())
     
-      const similarData: ListResponse<IFaq[]> = await fetch(`${baseURL}/base/faqs/`, {
+      const similarData: any = await fetch(`${baseURL}/base/faqs/`, {
         headers: {
-          'Accept-Language': context.locale || 'uz',
+          'Accept-Language': locale,
         },
       }).then((val) => val.json())
     
-      filterData = similarData.results.filter((val) => val.id !== faqFull.id)
+      if (similarData && similarData.results) {
+        filterData = similarData.results.filter((val: any) => val.id !== (faqFull as any).id)
+      }
   } catch(e) {
-      // Ignored for static export fallback
+      console.warn("Failed to fetch FAQ data for slug", context.params?.slug);
+  }
+
+  let messages = {};
+  try {
+      messages = (await import(`../../../locales/${locale}.json`)).default;
+  } catch (err) {
+      console.warn("Failed to load locales for FAQ slug", locale);
   }
 
   return {
     props: {
-      messages: (await import(`../../../locales/${context.locale || 'uz'}.json`)).default,
-      data: faqFull || {},
-      similarData: filterData || [],
+      messages,
+      data: faqFull,
+      similarData: filterData,
     },
   }
 }
 
-const FaqPage = ({ data, similarData }: { data: IFaqFull; similarData: IFaq[] }) => {
+import { useHasHydrated } from '@/hooks/useHasHydrated'
+
+const FaqPage = ({ data, similarData }: any) => {
   const t = useTranslations()
+  const hasHydrated = useHasHydrated()
   const breadCrumbItems = [
     {
       title: t('preferences.main'),
@@ -68,7 +81,7 @@ const FaqPage = ({ data, similarData }: { data: IFaqFull; similarData: IFaq[] })
     <main className="bg-white">
       <CBreadcrumb items={breadCrumbItems} />
       <div className="container mb-[90px] max-w-[792px]">
-        <FaqItem data={data} similarData={similarData} />
+        {hasHydrated && <FaqItem data={data} similarData={similarData} />}
       </div>
     </main>
   )

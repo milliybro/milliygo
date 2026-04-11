@@ -46,7 +46,7 @@ export interface IUserInfo {
 }
 
 interface AuthState {
-  isAuthenticated: boolean
+  isAuthenticated?: any
   userInfo: IUserInfo | null
 
   login: (_userData: IUserInfo) => void

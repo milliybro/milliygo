@@ -19,20 +19,18 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const { tg } = useTelegram()
   const [isMobile, setIsMobile] = useState(false)
 
-  const authStore = authContext?.authStore as {
-    isAuthenticated: boolean
-
-    login: (_user: object) => void
-    userInfo: object
-  }
-  const { login: loginAction, isAuthenticated } = authStore
+  const authStore = authContext?.authStore
+  const loginAction = authStore?.login
+  const isAuthenticated = authStore?.isAuthenticated
 
   useEffect(() => {
-    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
+    if (typeof navigator !== 'undefined') {
+      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
+    }
   }, [])
 
   useEffect(() => {
-    isAuthenticated &&
+    if (isAuthenticated && loginAction) {
       getAccountMe().then((res) => {
         loginAction(res)
         const shortUserInfo = {
@@ -46,6 +44,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
         }
         setCookie('userInfo', shortUserInfo)
       })
+    }
   }, [isAuthenticated, loginAction])
 
   useEffect(() => {

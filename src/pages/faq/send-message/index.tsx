@@ -1,25 +1,27 @@
 import CBreadcrumb from '@/components/common/CBreadcrumb'
-import TextMessage from '@/features/Faq/containers/TextMessage'
+import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 
-interface IProps {
-  locales: string[]
-  locale: string
-  defaultLocale: string
-}
+const TextMessage = dynamic(() => import('@/features/Faq/containers/TextMessage'), { ssr: false })
 
 export async function getStaticProps(context: any) {
   let messages = {};
-  if (context && context.locale) {
+  try {
+    if (context && context.locale) {
       messages = (await import(`../../../locales/${context.locale}.json`)).default;
-  } else {
+    } else {
       messages = (await import(`../../../locales/uz.json`)).default;
+    }
+  } catch (err) {
+    console.warn("Failed to load locales in src/pages/faq/send-message/index.tsx", err);
   }
   return { props: { messages } }
 }
 
-const FaqSendMessagePage = () => {
+const FaqSendMessagePage = (props: any) => {
   const t = useTranslations()
+  const hasHydrated = useHasHydrated()
   const breadCrumbItems = [
     {
       title: t('preferences.main'),
@@ -38,7 +40,7 @@ const FaqSendMessagePage = () => {
     <main className="bg-white">
       <CBreadcrumb items={breadCrumbItems} />
       <div className="container max-w-[792px] mb-[90px]">
-        <TextMessage />
+        {hasHydrated && <TextMessage />}
       </div>
     </main>
   )

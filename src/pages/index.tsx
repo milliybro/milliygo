@@ -15,10 +15,14 @@ interface IProps {
 
 export async function getStaticProps(context: any) {
   let messages = {};
-  if (context && context.locale) {
-      messages = (await import(`../locales/${context.locale}.json`)).default;
-  } else {
-      messages = (await import(`../locales/uz.json`)).default;
+  try {
+    if (context && context.locale) {
+        messages = (await import(`../locales/${context.locale}.json`)).default;
+    } else {
+        messages = (await import(`../locales/uz.json`)).default;
+    }
+  } catch (err) {
+    console.warn("Failed to load locales for", context?.locale);
   }
   return { props: { messages } }
 }

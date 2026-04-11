@@ -22,16 +22,12 @@ import CheckOtp from '../components/Auth/check-otp'
 
 function Login({ isModal }: { isModal?: boolean }) {
   const authContext = useContext(AuthContext)
-  const authStore = authContext?.authStore as {
-    isAuthenticated: boolean
-    login: (_user: object) => void
-    logout: () => void
-    userInfo: object
-  }
+  const authStore = authContext?.authStore
   const t = useTranslations()
   const router = useRouter()
   const width = useWindowSize()
-  const { isAuthenticated, login: loginAction } = authStore
+  const isAuthenticated = authStore?.isAuthenticated
+  const loginAction = authStore?.login
   const fingerPrintRef = useRef<any>(null)
 
   const { mutate: loginActionMutate, isPending } = useMutation({

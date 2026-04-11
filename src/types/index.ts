@@ -5,7 +5,7 @@ export type RangeValue = Parameters<
   NonNullable<ComponentProps<typeof DatePicker.RangePicker>['onChange']>
 >[0]
 
-export {}
+export { }
 
 export type IMainSearchFormTabs =
   | 'train'
@@ -417,6 +417,7 @@ export interface IPlacementExtractedRoom {
 }
 
 export interface IMe {
+  phone_number?: any
   id: number
   last_login: any
   is_superuser: boolean

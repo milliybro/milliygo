@@ -1,22 +1,15 @@
-import RegisterContractor from '@/features/Account/auth/register-contract'
+import dynamic from 'next/dynamic'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 
-interface IProps {
-  locales: string[]
-  locale: string
-  defaultLocale: string
-}
+const RegisterContractor = dynamic(() => import('@/features/Account/auth/register-contract'), { ssr: false })
 
-export async function getStaticProps(context: any) {
-  let messages = {};
-  if (context && context.locale) {
-      messages = (await import(`../../../locales/${context.locale}.json`)).default;
-  } else {
-      messages = (await import(`../../../locales/uz.json`)).default;
-  }
-  return { props: { messages } }
+export async function getStaticProps() {
+  return { props: { messages: {} } }
 }
 
 function RegisterContractorPage() {
+  const hasHydrated = useHasHydrated()
+  if (!hasHydrated) return null
   return <RegisterContractor />
 }
 

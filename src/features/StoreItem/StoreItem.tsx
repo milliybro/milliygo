@@ -41,14 +41,6 @@ const RestaurantItem = () => {
   })
 
 
-
-  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['item-base-categories', slug],
-    queryFn: () =>RestaurantCategories({ id: slug as string }),
-    enabled: !!slug,
-  })
-
-
   const restaurants = data?.data?.partners || []
   const filteredRestaurants = activeCategory
     ? restaurants.filter((r: any) =>
@@ -66,7 +58,6 @@ const RestaurantItem = () => {
       return next
     })
   }
-  const categoryList: ICategory[] = categoriesData?.data?.categories || []
 
 
   const { carts } = useCartStore()

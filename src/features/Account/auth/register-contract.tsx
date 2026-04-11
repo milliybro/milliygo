@@ -20,8 +20,8 @@ function RegisterContractor() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const authContext = useContext(AuthContext)
-  const authStore = authContext?.authStore as { userInfo: IUserInfo }
-  const { userInfo } = authStore
+  const authStore = authContext?.authStore
+  const userInfo = authStore?.userInfo
 
   const [step, setStep] = useState(1)
 

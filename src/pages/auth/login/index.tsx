@@ -1,22 +1,24 @@
-import React from 'react'
-import SignUp from '@/features/Account/auth/sign-up'
+import dynamic from 'next/dynamic'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 
-interface IProps {
-  locales: string[]
-  locale: string
-  defaultLocale: string
-}
+const SignUp = dynamic(() => import('@/features/Account/auth/sign-up'), { ssr: false })
 
 export async function getStaticProps(context: any) {
   let messages = {};
-  if (context && context.locale) {
+  try {
+    if (context && context.locale) {
       messages = (await import(`../../../locales/${context.locale}.json`)).default;
-  } else {
+    } else {
       messages = (await import(`../../../locales/uz.json`)).default;
+    }
+  } catch (err) {
+    console.warn("Failed to load locales in src/pages/auth/login/index.tsx", err);
   }
   return { props: { messages } }
 }
 
-export default function SignUpPage(): React.ReactElement {
+export default function SignUpPage(props: any) {
+  const hasHydrated = useHasHydrated()
+  if (!hasHydrated) return null
   return <SignUp />
 }

@@ -1,27 +1,29 @@
 import { Typography } from 'antd'
-
 import CBreadcrumb from '@/components/common/CBreadcrumb'
-import Faq from '@/features/Faq'
+import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 
-interface IProps {
-  locales: string[]
-  locale: string
-  defaultLocale: string
-}
+const Faq = dynamic(() => import('@/features/Faq'), { ssr: false })
 
 export async function getStaticProps(context: any) {
   let messages = {};
-  if (context && context.locale) {
-      messages = (await import(`../../locales/${context.locale}.json`)).default;
-  } else {
-      messages = (await import(`../../locales/uz.json`)).default;
+  try {
+    if (context && context.locale) {
+        messages = (await import(`../../locales/${context.locale}.json`)).default;
+    } else {
+        messages = (await import(`../../locales/uz.json`)).default;
+    }
+  } catch (err) {
+    console.warn("Failed to load locales for FAQ index", context?.locale);
   }
   return { props: { messages } }
 }
 
-const FaqPage = () => {
+const FaqPage = (props: any) => {
   const t = useTranslations()
+  const hasHydrated = useHasHydrated()
+  
   const breadCrumbItems = [
     {
       title: t('preferences.main'),
@@ -39,7 +41,7 @@ const FaqPage = () => {
         <Typography.Title level={2} className=" mb-8">
           {t('routes.faq')}
         </Typography.Title>
-        <Faq />
+        {hasHydrated && <Faq />}
       </div>
     </main>
   )

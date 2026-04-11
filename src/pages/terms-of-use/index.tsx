@@ -1,5 +1,6 @@
 import CBreadcrumb from '@/components/common/CBreadcrumb'
 import { useTranslations } from 'next-intl'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 
 interface IProps {
   locales: string[]
@@ -9,16 +10,22 @@ interface IProps {
 
 export async function getStaticProps(context: any) {
   let messages = {};
-  if (context && context.locale) {
-      messages = (await import(`../../locales/${context.locale}.json`)).default;
-  } else {
-      messages = (await import(`../../locales/uz.json`)).default;
+  try {
+    if (context && context.locale) {
+        messages = (await import(`../../locales/${context.locale}.json`)).default;
+    } else {
+        messages = (await import(`../../locales/uz.json`)).default;
+    }
+  } catch (err) {
+    console.warn("Failed to load locales for", context?.locale);
   }
   return { props: { messages } }
 }
 
 const TermsOfUsePage = () => {
   const t = useTranslations()
+  const hasHydrated = useHasHydrated()
+  
   const breadCrumbItems = [
     {
       title: t('preferences.main'),
@@ -28,6 +35,8 @@ const TermsOfUsePage = () => {
       title: t('others.terms-of-use'),
     },
   ]
+
+  if (!hasHydrated) return null
 
   return (
     <main className="bg-[#F8F8FA]">

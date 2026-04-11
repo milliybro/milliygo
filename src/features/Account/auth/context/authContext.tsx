@@ -21,7 +21,7 @@ interface AuthContextProps {
   openLogin: () => void
 }
 
-export const AuthContext = React.createContext<AuthContextProps | undefined>(undefined)
+export const AuthContext = React.createContext<any | undefined>(undefined)
 
 interface AuthProviderProps {
   children: ReactNode

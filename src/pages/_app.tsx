@@ -38,9 +38,16 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   useEffect(() => {
     async function loadLocale() {
-      const antdLocaleCode = getAntdLocaleCode(router.locale || 'uz')
-      const antdLocale = await import(`antd/locale/${antdLocaleCode}`)
-      setLocale(antdLocale.default)
+      const localeCode = router.locale || 'uz'
+      const antdLocaleCode = getAntdLocaleCode(localeCode)
+      try {
+        const antdLocale = await import(`antd/locale/${antdLocaleCode}`)
+        if (antdLocale && antdLocale.default) {
+          setLocale(antdLocale.default)
+        }
+      } catch (err) {
+        console.warn(`Failed to load antd locale for ${antdLocaleCode}`, err)
+      }
     }
 
     loadLocale()
@@ -55,8 +62,8 @@ const App = ({ Component, pageProps }: AppProps) => {
       </Head>
       <ConfigProvider theme={theme} locale={locale}>
         <NextIntlClientProvider
-          locale={router.locale}
-          timeZone="Uzbekistan/Tashkent"
+          locale={router.locale || 'uz'}
+          timeZone="Asia/Tashkent"
           messages={pageProps.messages ?? {}}
           getMessageFallback={({ key }) => {
             return getFallbackMessage(key)

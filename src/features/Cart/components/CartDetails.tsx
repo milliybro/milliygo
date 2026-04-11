@@ -56,7 +56,7 @@ const CartDetail = ({ restaurantData, restaurantLoading }: CartDetailProps) => {
       {activeStoreIds.map(storeId => {
         const cartData = carts[storeId]
         const currentCartItems = cartData?.items || []
-        const cartRestaurant = cartData?.restaurant
+        const cartRestaurant = cartData?.restaurant as any
         
         if (currentCartItems.length === 0) return null
 
