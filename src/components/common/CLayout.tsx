@@ -16,7 +16,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const { pathname } = useRouter()
   const authContext = useContext(AuthContext)
   const [isMobile, setIsMobile] = useState(false)
-  const { user: tgUser } = useTelegram()
+  const { user: tgUser, initData } = useTelegram()
 
   const authStore = authContext?.authStore
   const loginAction = authStore?.login
@@ -33,18 +33,20 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   // 2. Telegram WebApp Login mantiqi
   useEffect(() => {
     // Agar foydalanuvchi login bo'lgan bo'lsa yoki TMA foydalanuvchisi topilmasa - to'xtatish
-    if (isAuthenticated || !tgUser || !loginAction) return
+    if (isAuthenticated || !tgUser || !authContext?.telegramLogin) return
 
     const handleTelegramAutoLogin = async () => {
       try {
-        await authContext?.telegramLogin?.({
+        await authContext.telegramLogin({
           id: tgUser.id,
+          telegram_id: tgUser.id, // Some backends use this field name
           first_name: tgUser.first_name,
           last_name: tgUser.last_name || '',
           username: tgUser.username || '',
           photo_url: tgUser.photo_url || '',
-          auth_date: Math.floor(Date.now() / 1000), // Placeholder if backend requires it
-          hash: '', // TMA doesn't provide a widget hash directly in initDataUnsafe
+          init_data: initData, // TMA specific authentication
+          auth_date: Math.floor(Date.now() / 1000),
+          hash: '',
         })
       } catch (err: any) {
         console.error('Telegram auto-login error:', err)

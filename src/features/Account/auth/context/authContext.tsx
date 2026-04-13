@@ -117,8 +117,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   const telegramLogin = async (data: any) => {
+    const hide = message.loading(t('user.logging-in') || 'Xabarlashilmoqda...', 0)
     try {
       const res = await postTelegramUser(data)
+      hide()
       if (res.access) {
         localStorage.setItem('refresh_token', res.refresh || '')
         localStorage.setItem('access_token', res.access)
@@ -129,16 +131,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         authStore.login(res.user)
         setLoginModalOpen(false)
         
-        // Redirect if not already on account page
         if (!router.pathname.includes('account')) {
           router.push('/account/account-management')
         }
         
-        message.success(t('user.login-success'), 2)
+        message.success(t('user.login-success') || 'Muvaffaqiyatli kirdingiz', 2)
       }
     } catch (error: any) {
+      hide()
       console.error('Telegram login error:', error)
-      message.error(error.response?.data?.detail || t('user.api-error'))
+      const errorMsg = error.response?.data?.detail || error.message || t('user.api-error')
+      message.error(`${t('login_error') || 'Kirishda xatolik'}: ${errorMsg}`)
     }
   }
 
