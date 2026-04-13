@@ -1,22 +1,19 @@
 import { useRouter } from 'next/router'
-
 import CFooter from './CFooter'
 import CHeader from './CHeader'
 import BottomNavigation from './BottomNavigation'
-
 import { useContext, useEffect, type FC, type ReactNode, useState } from 'react'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
 import { setCookie } from 'cookies-next'
 import { Accessibility } from 'accessibility'
 import { useTranslations } from 'next-intl'
-import { useTelegram } from '@/hooks/useTelegram'
 import { postTelegramUser } from '@/api'
+import WebApp from '@twa-dev/sdk'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
   const { pathname } = useRouter()
   const authContext = useContext(AuthContext)
-  const { tg, user } = useTelegram()
   const [isMobile, setIsMobile] = useState(false)
 
   const authStore = authContext?.authStore
@@ -25,10 +22,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
   // Resize detector
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
     if (typeof window !== 'undefined') {
       handleResize()
       window.addEventListener('resize', handleResize)
@@ -38,25 +32,23 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
   // Telegram WebApp auto-login
   useEffect(() => {
-    console.log('=== TELEGRAM AUTO LOGIN ===')
-    console.log('user:', user)
-    console.log('isAuthenticated:', isAuthenticated)
-    console.log('loginAction:', !!loginAction)
+    if (typeof window === 'undefined') return
+    if (isAuthenticated || !loginAction) return
 
-    if (!user || isAuthenticated || !loginAction) {
-      console.log('SKIP:', {
-        noUser: !user,
-        alreadyAuth: isAuthenticated,
-        noLoginAction: !loginAction,
-      })
+    WebApp.ready()
+    WebApp.expand()
+
+    const initData = WebApp.initDataUnsafe
+    const user = initData?.user
+
+    console.log('=== TELEGRAM LOGIN ===')
+    console.log('initData:', initData)
+    console.log('user:', user)
+
+    if (!user) {
+      console.log('Telegram user topilmadi — oddiy browser yoki WebApp emas')
       return
     }
-
-    console.log('postTelegramUser chaqirilmoqda:', {
-      telegram_id: user.id,
-      first_name: user.first_name,
-      username: user.username,
-    })
 
     postTelegramUser({
       telegram_id: user.id,
@@ -66,27 +58,22 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
       photo_url: user.photo_url,
     })
       .then((res) => {
-        console.log('postTelegramUser response:', res)
+        console.log('Response:', res)
         if (res.access) {
           localStorage.setItem('access_token', res.access)
           if (res.refresh) localStorage.setItem('refresh_token', res.refresh)
           loginAction(res.user)
           const { user_permissions: _, ...shortUserInfo } = res.user || {}
           if (shortUserInfo) setCookie('userInfo', shortUserInfo)
-        } else {
-          console.error('access token yo`q, response:', res)
         }
       })
       .catch((err) => {
-        console.error('=== TELEGRAM LOGIN XATO ===')
-        console.error('status:', err.response?.status)
-        console.error('data:', err.response?.data)
-        console.error('message:', err.message)
+        console.error('Telegram login xato:', err.response?.status, err.response?.data)
         import('antd').then(({ message }) => {
           message.error('Login xatosi: ' + (err.response?.data?.detail || err.message))
         })
       })
-  }, [user, isAuthenticated, loginAction])
+  }, [isAuthenticated, loginAction]) // faqat bir marta ishlaydi
 
   // Accessibility
   useEffect(() => {
@@ -121,7 +108,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
       },
     })
 
-      ; (window as any).accessibilityInstance = accessibility
+    ;(window as any).accessibilityInstance = accessibility
 
     setTimeout(() => {
       document.querySelectorAll('.material-icons').forEach((el) => {
