@@ -16,13 +16,14 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
   const { pathname } = useRouter()
   const authContext = useContext(AuthContext)
-  const { tg } = useTelegram()
+  const { tg, user } = useTelegram()
   const [isMobile, setIsMobile] = useState(false)
 
   const authStore = authContext?.authStore
   const loginAction = authStore?.login
   const isAuthenticated = authStore?.isAuthenticated
 
+  // Resize detector
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768)
@@ -37,9 +38,25 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
   // Telegram WebApp auto-login
   useEffect(() => {
-    if (!tg?.initDataUnsafe?.user || isAuthenticated || !loginAction) return
+    console.log('=== TELEGRAM AUTO LOGIN ===')
+    console.log('user:', user)
+    console.log('isAuthenticated:', isAuthenticated)
+    console.log('loginAction:', !!loginAction)
 
-    const { user } = tg.initDataUnsafe
+    if (!user || isAuthenticated || !loginAction) {
+      console.log('SKIP:', {
+        noUser: !user,
+        alreadyAuth: isAuthenticated,
+        noLoginAction: !loginAction,
+      })
+      return
+    }
+
+    console.log('postTelegramUser chaqirilmoqda:', {
+      telegram_id: user.id,
+      first_name: user.first_name,
+      username: user.username,
+    })
 
     postTelegramUser({
       telegram_id: user.id,
@@ -49,23 +66,27 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
       photo_url: user.photo_url,
     })
       .then((res) => {
+        console.log('postTelegramUser response:', res)
         if (res.access) {
           localStorage.setItem('access_token', res.access)
+          if (res.refresh) localStorage.setItem('refresh_token', res.refresh)
           loginAction(res.user)
-
-          const { user_permissions: _permissions, ...shortUserInfo } = res.user || {}
-          if (shortUserInfo) {
-            setCookie('userInfo', shortUserInfo)
-          }
+          const { user_permissions: _, ...shortUserInfo } = res.user || {}
+          if (shortUserInfo) setCookie('userInfo', shortUserInfo)
+        } else {
+          console.error('access token yo`q, response:', res)
         }
       })
       .catch((err) => {
-        console.error('Telegram auto-login error:', err)
+        console.error('=== TELEGRAM LOGIN XATO ===')
+        console.error('status:', err.response?.status)
+        console.error('data:', err.response?.data)
+        console.error('message:', err.message)
         import('antd').then(({ message }) => {
           message.error('Login xatosi: ' + (err.response?.data?.detail || err.message))
         })
       })
-  }, [tg, isAuthenticated, loginAction])
+  }, [user, isAuthenticated, loginAction])
 
   // Accessibility
   useEffect(() => {
@@ -100,7 +121,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
       },
     })
 
-    ;(window as any).accessibilityInstance = accessibility
+      ; (window as any).accessibilityInstance = accessibility
 
     setTimeout(() => {
       document.querySelectorAll('.material-icons').forEach((el) => {
