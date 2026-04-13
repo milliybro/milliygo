@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons'
 import { Skeleton, Avatar, Button, Modal } from 'antd'
 import { useRouter } from 'next/router'
+import { useTelegram } from '@/hooks/useTelegram'
 
 export async function getStaticProps(context: any) {
   let messages = {};
@@ -36,6 +37,7 @@ export async function getStaticProps(context: any) {
 const ProfilePage = () => {
     const t = useTranslations()
     const router = useRouter()
+    const { user: tgUser } = useTelegram()
     const authContext = useContext(AuthContext)
     const logOut = authContext?.logOut
 
@@ -141,6 +143,18 @@ const ProfilePage = () => {
                                 <span className="text-[14px] font-bold text-gray-900">{user?.email || 'Biriktirilmagan'}</span>
                             </div>
                         </div>
+
+                        {tgUser && (
+                            <div className="flex items-center gap-4 px-4 py-3 active:bg-gray-50 transition-colors">
+                                <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                                    <UserOutlined className="text-lg" />
+                                </div>
+                                <div className="flex-1 flex flex-col">
+                                    <span className="text-[12px] text-gray-400">Telegram ID</span>
+                                    <span className="text-[14px] font-bold text-gray-900">{tgUser.id}</span>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex items-center gap-4 px-4 py-3 active:bg-gray-50 transition-colors">
                             <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500">
