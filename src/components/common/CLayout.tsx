@@ -11,6 +11,7 @@ import { setCookie } from 'cookies-next'
 import { Accessibility } from 'accessibility'
 import { useTranslations } from 'next-intl'
 import { useTelegram } from '@/hooks/useTelegram'
+import { postTelegramUser } from '@/api/index'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
@@ -24,8 +25,14 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const isAuthenticated = authStore?.isAuthenticated
 
   useEffect(() => {
-    if (typeof navigator !== 'undefined') {
-      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    if (typeof window !== 'undefined') {
+      handleResize()
+      window.addEventListener('resize', handleResize)
+      return () => window.removeEventListener('resize', handleResize)
     }
   }, [])
 
@@ -46,6 +53,38 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
       })
     }
   }, [isAuthenticated, loginAction])
+
+  useEffect(() => {
+    if (tg?.initDataUnsafe?.user && !isAuthenticated && loginAction) {
+      const { user, auth_date, hash } = tg.initDataUnsafe
+      const authData = {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        username: user.username,
+        auth_date: Number(auth_date),
+        hash: hash,
+      }
+
+      postTelegramUser(authData as any)
+        .then((res: any) => {
+          if (res.access) {
+            localStorage.setItem('access_token', res.access)
+            if (res.refresh) {
+              localStorage.setItem('refresh_token', res.refresh)
+            }
+            loginAction(res.user)
+            const { user_permissions: _permissions, ...shortUserInfo } = res.user || {}
+            if (shortUserInfo) {
+               setCookie('userInfo', shortUserInfo)
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('Telegram auto-login error:', err)
+        })
+    }
+  }, [tg, isAuthenticated, loginAction])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
