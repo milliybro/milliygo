@@ -6,6 +6,7 @@ import { FacebookAuthProvider, GoogleAuthProvider, signInWithPopup, signOut } fr
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import React, { ReactNode } from 'react'
+import { postTelegramUser } from '@/api'
 import { withFacebookAuth, withGoogleAuth, withOneIdAuth, withOneIdAuth2 } from '../api'
 import { useVerification } from '@/store/useVerification'
 
@@ -15,6 +16,7 @@ interface AuthContextProps {
   facebookSignIn: () => void
   // eslint-disable-next-line no-unused-vars
   oneIdLogin: ({ code }: { code: string }) => void
+  telegramLogin: (data: any) => Promise<void>
   logOut: () => void
   isLoginModalOpen: boolean
   setLoginModalOpen: (open: boolean) => void
@@ -114,6 +116,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  const telegramLogin = async (data: any) => {
+    try {
+      const res = await postTelegramUser(data)
+      if (res.access) {
+        localStorage.setItem('refresh_token', res.refresh || '')
+        localStorage.setItem('access_token', res.access)
+        
+        const { user_permissions: _permissions, ...shortUserInfo } = res.user
+        setCookie('userInfo', shortUserInfo)
+        
+        authStore.login(res.user)
+        setLoginModalOpen(false)
+        
+        // Redirect if not already on account page
+        if (!router.pathname.includes('account')) {
+          router.push('/account/account-management')
+        }
+        
+        message.success(t('user.login-success'), 2)
+      }
+    } catch (error: any) {
+      console.error('Telegram login error:', error)
+      message.error(error.response?.data?.detail || t('user.api-error'))
+    }
+  }
+
   const logOut = () => {
     signOut(auth)
     deleteCookie('userInfo')
@@ -132,6 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         facebookSignIn,
         logOut,
         oneIdLogin,
+        telegramLogin,
         isLoginModalOpen,
         setLoginModalOpen,
         openLogin,

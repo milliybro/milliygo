@@ -37,34 +37,17 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
     const handleTelegramAutoLogin = async () => {
       try {
-        console.log('TMA Login jarayoni boshlandi:', tgUser.id)
-
-        const res = await postTelegramUser({
-          telegram_id: tgUser.id,
+        await authContext?.telegramLogin?.({
+          id: tgUser.id,
           first_name: tgUser.first_name,
           last_name: tgUser.last_name || '',
           username: tgUser.username || '',
           photo_url: tgUser.photo_url || '',
+          auth_date: Math.floor(Date.now() / 1000), // Placeholder if backend requires it
+          hash: '', // TMA doesn't provide a widget hash directly in initDataUnsafe
         })
-
-        if (res.access) {
-          localStorage.setItem('access_token', res.access)
-          if (res.refresh) localStorage.setItem('refresh_token', res.refresh)
-
-          // AuthContext orqali foydalanuvchini tizimga kiritish
-          loginAction(res.user)
-
-          // Cookie-ga ma'lumotlarni saqlash (Server-side rendering uchun kerak bo'lishi mumkin)
-          const { user_permissions, ...shortUserInfo } = res.user || {}
-          if (shortUserInfo) setCookie('userInfo', JSON.stringify(shortUserInfo))
-
-          console.log('Telegram orqali login muvaffaqiyatli!')
-        }
       } catch (err: any) {
-        console.error('Telegram login xatosi:', err)
-        import('antd').then(({ message }) => {
-          message.error(t('login_error') + ': ' + (err.response?.data?.detail || err.message))
-        })
+        console.error('Telegram auto-login error:', err)
       }
     }
 

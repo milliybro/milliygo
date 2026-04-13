@@ -19,6 +19,7 @@ import { fingerprint, FingerprintResult } from '@/utils/fingerprint'
 import type { RadioChangeEvent } from 'antd/es/radio'
 import { AxiosError } from 'axios'
 import CheckOtp from '../components/Auth/check-otp'
+import ThirdPartyLogin from '../components/Auth/third-party-login'
 
 function Login({ isModal }: { isModal?: boolean }) {
   const authContext = useContext(AuthContext)
@@ -107,6 +108,18 @@ function Login({ isModal }: { isModal?: boolean }) {
               isLoading={isPending}
               nextPageHandler={() => { }}
             />
+
+            <div className="mt-6">
+              <div className="relative mb-6 text-center">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200" />
+                </div>
+                <span className="relative bg-white px-4 text-sm text-gray-500">
+                  yoki
+                </span>
+              </div>
+              <ThirdPartyLogin />
+            </div>
 
 
 

@@ -11,6 +11,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import queryString from 'query-string'
 import { AuthContext } from '../../auth/context/authContext'
+import { LoginButton } from '@telegram-auth/react'
 
 const oneIdUrl = 'https://sso.egov.uz/sso/oauth/Authorization.do?'
 
@@ -27,11 +28,12 @@ export default function ThirdPartyLogin(): ReactElement {
   const t = useTranslations()
   const locale = useLocale()
   const { push, query } = useRouter()
-  const { googleSignIn, facebookSignIn, oneIdLogin } = useContext(AuthContext) as {
+  const { googleSignIn, facebookSignIn, oneIdLogin, telegramLogin } = useContext(AuthContext) as {
     googleSignIn: () => void
     facebookSignIn: () => void
     // eslint-disable-next-line no-unused-vars
     oneIdLogin: ({ code }: { code: string }) => void
+    telegramLogin: (data: any) => Promise<void>
   }
 
   useEffect(() => {
@@ -118,6 +120,16 @@ export default function ThirdPartyLogin(): ReactElement {
           <OneIdIcon className="text-[50px] dsm:text-[38px]" />
         </div>
       </Button>
+      <div className="mb-4 w-full">
+        <LoginButton
+          botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || 'milliy_go_bot'}
+          onAuthCallback={(data) => telegramLogin(data)}
+          buttonSize="large"
+          cornerRadius={16}
+          showUserPhoto={false}
+          lang={locale}
+        />
+      </div>
       <Flex gap={16} className="mb-[50px] dsm:mb-[30px] dsm:flex-col">
         <Button
           onClick={handleSignInGoogle}
