@@ -1,40 +1,34 @@
 import { useEffect, useState } from 'react'
 
-declare global {
-  interface Window {
-    Telegram: any
-  }
-}
-
 export const useTelegram = () => {
-  const [tg, setTg] = useState<any>(null)
+  const [tgData, setTgData] = useState<{ tg: any; user: any }>({ tg: null, user: null })
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      const tgApp = window.Telegram.WebApp
-      tgApp.ready()
-      tgApp.expand()
-      setTg(tgApp)
+    const initTg = () => {
+      // Oynada Telegram WebApp borligini tekshirish
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        const webapp = window.Telegram.WebApp
+        webapp.ready()
+        webapp.expand()
+        setTgData({
+          tg: webapp,
+          user: webapp.initDataUnsafe?.user,
+        })
+      }
+    }
+
+    // SDK yuklanishi uchun kichik kechikish bilan tekshirish
+    if (window.Telegram?.WebApp) {
+      initTg()
+    } else {
+      const timer = setTimeout(initTg, 500)
+      return () => clearTimeout(timer)
     }
   }, [])
 
-  const onClose = () => {
-    tg?.close()
-  }
-
-  const onToggleButton = () => {
-    if (tg?.MainButton.isVisible) {
-      tg?.MainButton.hide()
-    } else {
-      tg?.MainButton.show()
-    }
-  }
-
   return {
-    onClose,
-    onToggleButton,
-    tg,
-    user: tg?.initDataUnsafe?.user,
-    queryId: tg?.initDataUnsafe?.query_id,
+    tg: tgData.tg,
+    user: tgData.user,
+    onClose: () => tgData.tg?.close(),
   }
 }
