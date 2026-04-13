@@ -6,15 +6,34 @@ export const useTelegram = () => {
   const [initData, setInitData] = useState<string>('')
 
   useEffect(() => {
-    // Oynada Telegram WebApp borligini tekshirish
-    const webapp = (window as any).Telegram?.WebApp
+    const initWebApp = () => {
+      const webapp = (window as any).Telegram?.WebApp
+      
+      if (webapp && webapp.initDataUnsafe?.user) {
+        webapp.ready()
+        webapp.expand()
+        setTg(webapp)
+        setUser(webapp.initDataUnsafe.user)
+        setInitData(webapp.initData)
+      }
+    }
 
-    if (webapp) {
-      webapp.ready()
-      webapp.expand()
-      setTg(webapp)
-      setUser(webapp.initDataUnsafe?.user)
-      setInitData(webapp.initData)
+    // 1. Agar SDK allaqachon yuklangan bo'lsa
+    if ((window as any).Telegram?.WebApp) {
+      initWebApp()
+    } else {
+      // 2. Agar SDK kechikayotgan bo'lsa (interval bilan tekshirish)
+      const interval = setInterval(() => {
+        if ((window as any).Telegram?.WebApp) {
+          initWebApp()
+          clearInterval(interval)
+        }
+      }, 100)
+      
+      // 2 soniyadan keyin tekshirishni to'xtatish
+      setTimeout(() => clearInterval(interval), 2000)
+      
+      return () => clearInterval(interval)
     }
   }, [])
 
