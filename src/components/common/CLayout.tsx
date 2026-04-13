@@ -11,7 +11,7 @@ import { setCookie } from 'cookies-next'
 import { Accessibility } from 'accessibility'
 import { useTranslations } from 'next-intl'
 import { useTelegram } from '@/hooks/useTelegram'
-import { postTelegramUser } from '@/api/index'
+import { login } from '@/features/Account/auth/api'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
@@ -56,18 +56,9 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
   useEffect(() => {
     if (tg?.initDataUnsafe?.user && !isAuthenticated && loginAction) {
-      const { user, auth_date, hash } = tg.initDataUnsafe
-      const authData = {
-        id: user.id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        username: user.username,
-        photo_url: user.photo_url,
-        auth_date: Number(auth_date),
-        hash: hash,
-      }
+      const { user } = tg.initDataUnsafe
 
-      postTelegramUser(authData as any)
+      login({ telegram_id: user.id } as any, '')
         .then((res: any) => {
           if (res.access) {
             localStorage.setItem('access_token', res.access)
@@ -83,6 +74,11 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
         })
         .catch((err) => {
           console.error('Telegram auto-login error:', err)
+          if (typeof window !== 'undefined') {
+            import('antd').then(({ message }) => {
+              message.error('Login xatosi: ' + (err.response?.data?.detail || err.message))
+            })
+          }
         })
     }
   }, [tg, isAuthenticated, loginAction])
