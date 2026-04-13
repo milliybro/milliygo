@@ -85,7 +85,7 @@ export async function postTelegramUser(
   data: TelegramAuthData
 ): Promise<{ access: string; user: User }> {
   const params = queryString.stringifyUrl({
-    url: '/account/socials/with_telegram/',
+    url: '/auth/user/telegram-token/',
     query: {
       ...data,
     },
