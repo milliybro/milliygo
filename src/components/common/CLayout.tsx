@@ -4,14 +4,13 @@ import CFooter from './CFooter'
 import CHeader from './CHeader'
 import BottomNavigation from './BottomNavigation'
 
-import { getAccountMe } from '@/features/Account/api'
 import { useContext, useEffect, type FC, type ReactNode, useState } from 'react'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
 import { setCookie } from 'cookies-next'
 import { Accessibility } from 'accessibility'
 import { useTranslations } from 'next-intl'
 import { useTelegram } from '@/hooks/useTelegram'
-import { login } from '@/features/Account/auth/api'
+import { postTelegramUser } from '@/api'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
@@ -36,53 +35,39 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     }
   }, [])
 
+  // Telegram WebApp auto-login
   useEffect(() => {
-    if (isAuthenticated && loginAction) {
-      getAccountMe().then((res) => {
-        loginAction(res)
-        const shortUserInfo = {
-          id: res.id,
-          first_name: res.first_name,
-          last_name: res.last_name,
-          email: res.email,
-          phone: res.phone,
-          groups: res.groups,
-          is_guide: res.is_guide,
+    if (!tg?.initDataUnsafe?.user || isAuthenticated || !loginAction) return
+
+    const { user } = tg.initDataUnsafe
+
+    postTelegramUser({
+      telegram_id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      username: user.username,
+      photo_url: user.photo_url,
+    })
+      .then((res) => {
+        if (res.access) {
+          localStorage.setItem('access_token', res.access)
+          loginAction(res.user)
+
+          const { user_permissions: _permissions, ...shortUserInfo } = res.user || {}
+          if (shortUserInfo) {
+            setCookie('userInfo', shortUserInfo)
+          }
         }
-        setCookie('userInfo', shortUserInfo)
       })
-    }
-  }, [isAuthenticated, loginAction])
-
-  useEffect(() => {
-    if (tg?.initDataUnsafe?.user && !isAuthenticated && loginAction) {
-      const { user } = tg.initDataUnsafe
-
-      login({ telegram_id: user.id } as any, '')
-        .then((res: any) => {
-          if (res.access) {
-            localStorage.setItem('access_token', res.access)
-            if (res.refresh) {
-              localStorage.setItem('refresh_token', res.refresh)
-            }
-            loginAction(res.user)
-            const { user_permissions: _permissions, ...shortUserInfo } = res.user || {}
-            if (shortUserInfo) {
-               setCookie('userInfo', shortUserInfo)
-            }
-          }
+      .catch((err) => {
+        console.error('Telegram auto-login error:', err)
+        import('antd').then(({ message }) => {
+          message.error('Login xatosi: ' + (err.response?.data?.detail || err.message))
         })
-        .catch((err) => {
-          console.error('Telegram auto-login error:', err)
-          if (typeof window !== 'undefined') {
-            import('antd').then(({ message }) => {
-              message.error('Login xatosi: ' + (err.response?.data?.detail || err.message))
-            })
-          }
-        })
-    }
+      })
   }, [tg, isAuthenticated, loginAction])
 
+  // Accessibility
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -135,9 +120,6 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   ) {
     return children
   }
-
-  // If in Telegram, we might want to hide the header/footer and only use native components
-  const isTma = !!tg
 
   return (
     <div className={`flex min-h-screen flex-col ${isMobile ? 'tma-container' : ''}`}>

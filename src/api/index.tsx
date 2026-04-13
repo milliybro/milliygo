@@ -83,16 +83,14 @@ export async function createChat(): Promise<ICreateChat> {
 
 export async function postTelegramUser(
   data: TelegramAuthData
-): Promise<{ access: string; user: User }> {
+): Promise<{ access: string; refresh?: string; user: User }> {
   const params = queryString.stringifyUrl({
     url: '/auth/user/telegram-token/',
-    query: {
-      ...data,
-    },
+    query: { ...data },
   })
   const res: any = await requestAuth({
     url: params,
-    method: 'get',
+    method: 'post',
   })
   return res
 }
