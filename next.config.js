@@ -30,11 +30,15 @@ const nextConfig = {
   },
 
 
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.module.rules.push({
       test: /\.d\.ts$/,
       use: 'ignore-loader',
     })
+
+    if (isServer) {
+      config.externals = [...(config.externals || []), '@twa-dev/sdk']
+    }
     return config
   },
 

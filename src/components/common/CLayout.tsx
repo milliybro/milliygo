@@ -8,7 +8,6 @@ import { setCookie } from 'cookies-next'
 import { Accessibility } from 'accessibility'
 import { useTranslations } from 'next-intl'
 import { postTelegramUser } from '@/api'
-import WebApp from '@twa-dev/sdk'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
@@ -32,48 +31,53 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
   // Telegram WebApp auto-login
   useEffect(() => {
-    if (typeof window === 'undefined') return
     if (isAuthenticated || !loginAction) return
 
-    WebApp.ready()
-    WebApp.expand()
+    import('@twa-dev/sdk').then((module) => {
+      const WebApp = module.default
 
-    const initData = WebApp.initDataUnsafe
-    const user = initData?.user
+      WebApp.ready()
+      WebApp.expand()
 
-    console.log('=== TELEGRAM LOGIN ===')
-    console.log('initData:', initData)
-    console.log('user:', user)
+      const user = WebApp.initDataUnsafe?.user
 
-    if (!user) {
-      console.log('Telegram user topilmadi — oddiy browser yoki WebApp emas')
-      return
-    }
+      console.log('=== TELEGRAM LOGIN ===')
+      console.log('user:', user)
 
-    postTelegramUser({
-      telegram_id: user.id,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      username: user.username,
-      photo_url: user.photo_url,
-    })
-      .then((res) => {
-        console.log('Response:', res)
-        if (res.access) {
-          localStorage.setItem('access_token', res.access)
-          if (res.refresh) localStorage.setItem('refresh_token', res.refresh)
-          loginAction(res.user)
-          const { user_permissions: _, ...shortUserInfo } = res.user || {}
-          if (shortUserInfo) setCookie('userInfo', shortUserInfo)
-        }
+      if (!user) {
+        console.log('Telegram user topilmadi — oddiy browser yoki WebApp emas')
+        return
+      }
+
+      postTelegramUser({
+        telegram_id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        username: user.username,
+        photo_url: user.photo_url,
       })
-      .catch((err) => {
-        console.error('Telegram login xato:', err.response?.status, err.response?.data)
-        import('antd').then(({ message }) => {
-          message.error('Login xatosi: ' + (err.response?.data?.detail || err.message))
+        .then((res) => {
+          console.log('postTelegramUser response:', res)
+          if (res.access) {
+            localStorage.setItem('access_token', res.access)
+            if (res.refresh) localStorage.setItem('refresh_token', res.refresh)
+            loginAction(res.user)
+            const { user_permissions: _, ...shortUserInfo } = res.user || {}
+            if (shortUserInfo) setCookie('userInfo', shortUserInfo)
+          } else {
+            console.error('access token yo`q, response:', res)
+          }
         })
-      })
-  }, [isAuthenticated, loginAction]) // faqat bir marta ishlaydi
+        .catch((err) => {
+          console.error('=== TELEGRAM LOGIN XATO ===')
+          console.error('status:', err.response?.status)
+          console.error('data:', err.response?.data)
+          import('antd').then(({ message }) => {
+            message.error('Login xatosi: ' + (err.response?.data?.detail || err.message))
+          })
+        })
+    })
+  }, [isAuthenticated, loginAction])
 
   // Accessibility
   useEffect(() => {
