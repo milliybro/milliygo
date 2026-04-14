@@ -13,8 +13,6 @@ import type {
 import requestAuth from '@/utils/authRequest'
 import request from '@/utils/axios'
 import requestLocaleChat from '@/utils/requestSupport'
-import { TelegramAuthData } from '@telegram-auth/react'
-import queryString from 'query-string'
 
 export async function getCurrencies(): Promise<Currency[]> {
   const res: Currency[] = await request({
@@ -82,15 +80,12 @@ export async function createChat(): Promise<ICreateChat> {
 }
 
 export async function postTelegramUser(
-  data: TelegramAuthData
+  data: any
 ): Promise<{ access: string; refresh?: string; user: User }> {
-  const params = queryString.stringifyUrl({
-    url: '/auth/user/telegram-token/',
-    query: { ...data },
-  })
   const res: any = await requestAuth({
-    url: params,
+    url: '/auth/user/telegram-token/',
     method: 'post',
+    data,
   })
   return res
 }

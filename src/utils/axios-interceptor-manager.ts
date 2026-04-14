@@ -53,7 +53,7 @@ export const globalOnResponseRejected: (_error: AxiosError) => Promise<any> = as
 
   if (
     refreshT &&
-    (error.status === 403 || error.status === 401) &&
+    (error.response?.status === 403 || error.response?.status === 401) &&
     originalReq &&
     !originalReq?._retry
   ) {
@@ -113,35 +113,38 @@ export const globalOnResponseRejected: (_error: AxiosError) => Promise<any> = as
     }
   }
 
-  const errorData = error.response?.data as IErrorMessage[]
+  const errorData = error.response?.data as any
 
-  if (Array.isArray(errorData) && errorData.length > 0) {
-    const errorMessages = errorData
-      .map((err) => err?.detail)
-      .filter(Boolean)
-      .join('\n')
+  if (errorData) {
+    const errorMsg =
+      errorData.detail ||
+      errorData.message ||
+      (Array.isArray(errorData) ? errorData[0]?.detail : null) ||
+      'Something went wrong'
 
-    errorData.forEach((val) => {
-      if (val?.status_code === 500) {
-        notification.error({ message: messages.server })
-      } else if (Array.isArray(errorData)) {
-        errorData.forEach((val) => {
+    if (Array.isArray(errorData)) {
+      errorData.forEach((val) => {
+        if (val?.status_code === 500) {
+          notification.error({ message: messages.server })
+        } else {
           notification.error({
-            message: val?.error_type,
+            message: val?.error_type || 'Error',
             description: val?.detail,
           })
-        })
-      } else {
-        notification.error({ message: 'Unexpected error occurred.' })
-      }
-    })
+        }
+      })
+    } else if (typeof errorData === 'object') {
+      notification.error({
+        message: 'Error',
+        description: errorMsg,
+      })
+    }
 
-    return Promise.reject(
-      new CustomError(errorMessages, error.code || '', error.response?.status || 0)
-    )
+    return Promise.reject(new CustomError(errorMsg, error.code || '', error.response?.status || 0))
   }
 
-  return Promise.reject(new CustomError('Something went wrong', 'INTERNAL_SERVER_ERROR', 500))
+  const networkErrorMsg = error.message || 'Tarmoqda nosozlik (Network Error)'
+  return Promise.reject(new CustomError(networkErrorMsg, error.code || 'NETWORK_ERROR', 0))
 }
 
 export const globalOnRequestFulfilled: (
