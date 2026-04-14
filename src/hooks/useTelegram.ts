@@ -1,4 +1,3 @@
-// src/hooks/useTelegram.ts
 import { useEffect, useState } from 'react'
 
 export const useTelegram = () => {
@@ -13,37 +12,45 @@ export const useTelegram = () => {
 
   useEffect(() => {
     const checkTMA = () => {
-      addLog("Oddiy window tekshiruvi...")
+      if (typeof window === 'undefined') return
 
-      // Siz aytgan usulda tekshiramiz:
       const tg = (window as any).Telegram?.WebApp
+      let rawInitData = tg?.initData || ''
+      let userData = tg?.initDataUnsafe?.user
 
-      if (tg) {
-        addLog("window.Telegram.WebApp TOPILDI!")
-
-        const userData = tg.initDataUnsafe?.user
-        if (userData) {
-          addLog(`Muvaffaqiyat! User ID: ${userData.id}`)
-          setUser(userData)
-          setInitData(tg.initData)
-        } else {
-          addLog("Xatolik: WebApp bor, lekin initDataUnsafe.user BO'SH")
-          addLog(`Xom ma'lumot: ${JSON.stringify(tg.initDataUnsafe || {})}`)
+      // 1. Agar redirect bo'lgan bo'lsa, ma'lumotlarni LocalStorage'dan tekshiramiz
+      if (!userData) {
+        const savedData = localStorage.getItem('tma_init_data')
+        const savedUser = localStorage.getItem('tma_user')
+        if (savedData && savedUser) {
+          addLog("Ma'lumotlar LocalStorage'dan tiklandi.")
+          rawInitData = savedData
+          userData = JSON.parse(savedUser)
         }
+      }
+
+      if (tg && tg.initDataUnsafe?.user) {
+        addLog("window.Telegram orqali yangi ma'lumot olindi.")
+        // Ma'lumotlarni keyingi redirect uchun saqlab qo'yamiz
+        localStorage.setItem('tma_init_data', tg.initData)
+        localStorage.setItem('tma_user', JSON.stringify(tg.initDataUnsafe.user))
+
+        userData = tg.initDataUnsafe.user
+        rawInitData = tg.initData
+      }
+
+      if (userData) {
+        addLog(`User aniqlangan: ${userData.id}`)
+        setUser(userData)
+        setInitData(rawInitData)
       } else {
-        addLog("window.Telegram mavjud emas.")
+        addLog("Hech qanday ma'lumot topilmadi (Storage ham bo'sh).")
       }
 
       setIsReady(true)
     }
 
-    // Brauzer yuklanishi uchun biroz kutamiz
-    if (document.readyState === 'complete') {
-      checkTMA()
-    } else {
-      window.addEventListener('load', checkTMA)
-      return () => window.removeEventListener('load', checkTMA)
-    }
+    checkTMA()
   }, [])
 
   return { user, initData, isReady, logs, addLog }
