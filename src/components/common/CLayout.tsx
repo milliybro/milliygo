@@ -1,6 +1,5 @@
 import { useRouter } from 'next/router'
 import { useContext, useEffect, useState, type FC, type ReactNode } from 'react'
-import { setCookie } from 'cookies-next'
 import { useTranslations } from 'next-intl'
 import { Accessibility } from 'accessibility'
 
@@ -8,21 +7,21 @@ import CFooter from './CFooter'
 import CHeader from './CHeader'
 import BottomNavigation from './BottomNavigation'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
-import { postTelegramUser } from '@/api'
 import { useTelegram } from '@/hooks/useTelegram'
+import Logo from '@/components/icons/logo'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
   const { pathname } = useRouter()
   const authContext = useContext(AuthContext)
   const [isMobile, setIsMobile] = useState(false)
-  const { user: tgUser, initData } = useTelegram()
+  const { user: tgUser, initData, isReady } = useTelegram()
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const authStore = authContext?.authStore
-  const loginAction = authStore?.login
   const isAuthenticated = authStore?.isAuthenticated
 
-  // 1. Ekran o'lchamini aniqlash
+  // 1. Detect screen size
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize()
@@ -30,33 +29,39 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // 2. Telegram WebApp Login mantiqi
+  // 2. Professional Telegram Auto-Login logic
   useEffect(() => {
-    // Agar foydalanuvchi login bo'lgan bo'lsa yoki TMA foydalanuvchisi topilmasa - to'xtatish
-    if (isAuthenticated || !tgUser || !authContext?.telegramLogin) return
+    // Wait until SDK is ready and check if we already have an authenticated session
+    if (!isReady || isAuthenticated || !authContext?.telegramLogin) return
 
-    const handleTelegramAutoLogin = async () => {
-      try {
-        await authContext.telegramLogin({
-          id: tgUser.id,
-          telegram_id: tgUser.id, // Some backends use this field name
-          first_name: tgUser.first_name,
-          last_name: tgUser.last_name || '',
-          username: tgUser.username || '',
-          photo_url: tgUser.photo_url || '',
-          init_data: initData, // TMA specific authentication
-          auth_date: Math.floor(Date.now() / 1000),
-          hash: '',
-        })
-      } catch (err: any) {
-        console.error('Telegram auto-login error:', err)
+    // If we're on a page that doesn't need layout/auth, skip
+    const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
+    if (noLayoutPages.some(page => pathname.includes(page))) return
+
+    if (tgUser && !isLoggingIn) {
+      const handleTelegramAutoLogin = async () => {
+        setIsLoggingIn(true)
+        try {
+          console.log('Professional TMA Login initiated for user:', tgUser.id)
+          await authContext.telegramLogin({
+            ...tgUser,
+            telegram_id: tgUser.id,
+            init_data: initData,
+            auth_date: Math.floor(Date.now() / 1000),
+            hash: '', 
+          })
+        } catch (err: any) {
+          console.error('Telegram auto-login failure:', err)
+        } finally {
+          setIsLoggingIn(false)
+        }
       }
+
+      handleTelegramAutoLogin()
     }
+  }, [isReady, tgUser, isAuthenticated, authContext, initData, pathname, isLoggingIn])
 
-    handleTelegramAutoLogin()
-  }, [isAuthenticated, tgUser, loginAction, t])
-
-  // 3. Accessibility sozlamalari
+  // 3. Accessibility settings
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -67,7 +72,6 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
         increaseText: t('accessibility.increaseText'),
         decreaseText: t('accessibility.decreaseText'),
         invertColors: t('accessibility.invertColors'),
-        // ... boshqa label-lar
       },
       icon: {
         img: 'visibility',
@@ -79,7 +83,26 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => accessibility?.destroy?.()
   }, [t])
 
-  // Login sahifalarida layoutni ko'rsatmaslik
+  // Show splash screen while initializing or logging in via TMA
+  if (!isReady || isLoggingIn) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-white">
+        <div className="animate-pulse mb-6">
+           <Logo className="text-[60px] text-primary" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+            <span className="text-[16px] font-bold text-gray-800 animate-bounce">
+               Milliy-Go
+            </span>
+            <span className="text-[12px] text-gray-400">
+               {isLoggingIn ? 'Akkauntga kirilmoqda...' : 'Yuklanmoqda...'}
+            </span>
+        </div>
+      </div>
+    )
+  }
+
+  // Hide layout for specific pages
   const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
   if (noLayoutPages.some(page => pathname.includes(page))) {
     return <>{children}</>
