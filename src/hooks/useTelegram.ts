@@ -1,3 +1,4 @@
+// src/hooks/useTelegram.ts
 import { useEffect, useState } from 'react'
 
 export const useTelegram = () => {
@@ -11,24 +12,25 @@ export const useTelegram = () => {
   }
 
   useEffect(() => {
-    // SDK ni faqat useEffect ichida (brauzerda) yuklaymiz
     const initTMA = async () => {
       try {
-        addLog("SDK yuklanmoqda (twa-dev/sdk)...")
+        addLog("SDK yuklanmoqda...")
         const WebApp = (await import('@twa-dev/sdk')).default
-
+        
         WebApp.ready()
-        WebApp.expand()
-        WebApp.enableClosingConfirmation()
+        
+        // Muhim: Qaysi platformada ekanligimizni ko'ramiz
+        addLog(`Platform: ${WebApp.platform}`)
+        addLog(`Version: ${WebApp.version}`)
 
         const data = WebApp.initDataUnsafe
-
+        
         if (data && data.user) {
           addLog(`Foydalanuvchi aniqlandi: ${data.user.id}`)
           setUser(data.user)
           setInitData(WebApp.initData)
         } else {
-          addLog("Foydalanuvchi ma'lumoti yo'q.")
+          addLog("Foydalanuvchi ma'lumoti yo'q (InitDataUnsafe bo'sh).")
         }
         setIsReady(true)
       } catch (err: any) {
