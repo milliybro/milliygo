@@ -13,59 +13,50 @@ export const useTelegram = () => {
 
   useEffect(() => {
     addLog("SDK qidirish boshlandi...")
-    
+
     const initWebApp = () => {
+      if (typeof window === 'undefined') return
+
       const webapp = (window as any).Telegram?.WebApp
-      
-      if (webapp) {
-        addLog("SDK topildi!")
+
+      if (webapp && webapp.initDataUnsafe?.user) {
+        addLog("SDK va User topildi!")
         webapp.ready()
         webapp.expand()
         setTg(webapp)
-        
-        if (webapp.initDataUnsafe?.user) {
-          addLog(`User ma'lumoti olindi: ${webapp.initDataUnsafe.user.id}`)
-          setUser(webapp.initDataUnsafe.user)
-          setInitData(webapp.initData || '')
-        } else {
-          addLog("User ma'lumoti topilmadi (InitDataUnsafe bo'sh).")
-        }
+        setUser(webapp.initDataUnsafe.user)
+        setInitData(webapp.initData || '')
+        setIsReady(true)
+      } else if (webapp) {
+        addLog("SDK bor, lekin foydalanuvchi ma'lumoti yo'q.")
+        setTg(webapp)
         setIsReady(true)
       }
     }
 
-    if ((window as any).Telegram?.WebApp) {
+    // Agarda SDK 3 soniya ichida topilmasa, tayyor deb hisoblab davom etamiz
+    const timeout = setTimeout(() => {
+      if (!isReady) {
+        addLog("SDK kutish tugadi (Browser rejimida davom etiladi).")
+        setIsReady(true)
+      }
+    }, 3000)
+
+    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
       initWebApp()
     } else {
       const interval = setInterval(() => {
-        const webapp = (window as any).Telegram?.WebApp
-        if (webapp) {
+        if ((window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
           initWebApp()
           clearInterval(interval)
-        } else {
-          addLog("SDK hali kutilyapti...")
         }
       }, 500)
-      
-      setTimeout(() => {
+      return () => {
         clearInterval(interval)
-        if (!isReady) {
-          addLog("SDK kutish vaqti tugadi (Timeout 5s).")
-          setIsReady(true)
-        }
-      }, 5000)
-
-      return () => clearInterval(interval)
+        clearTimeout(timeout)
+      }
     }
-  }, [])
+  }, [isReady])
 
-  return {
-    tg,
-    user,
-    initData,
-    isReady,
-    logs,
-    addLog,
-    onClose: () => tg?.close(),
-  }
+  return { tg, user, initData, isReady, logs, addLog, onClose: () => tg?.close() }
 }

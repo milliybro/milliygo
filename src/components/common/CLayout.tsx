@@ -15,14 +15,15 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const { pathname } = useRouter()
   const authContext = useContext(AuthContext)
   const [isMobile, setIsMobile] = useState(false)
-  
-  // Hook dan loglarni ham olamiz
+
+  // Hook orqali Telegram ma'lumotlari va loglarni olamiz
   const { user: tgUser, initData, isReady, logs, addLog } = useTelegram()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const authStore = authContext?.authStore
   const isAuthenticated = authStore?.isAuthenticated
 
+  // 1. Ekran o'lchamini aniqlash (Mobile yoki Desktop)
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize()
@@ -30,35 +31,42 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // 2. Telegram Auto-Login mantiqi
   useEffect(() => {
+    // SDK tayyor bo'lishini va foydalanuvchi login bo'lmaganini tekshiramiz
     if (!isReady || isAuthenticated || !authContext?.telegramLogin) return
 
-    if (tgUser && !isLoggingIn) {
+    // Agarda foydalanuvchi ma'lumotlari bo'lsa, login so'rovini yuboramiz
+    if (tgUser && tgUser.id && !isLoggingIn) {
       const handleTelegramAutoLogin = async () => {
         setIsLoggingIn(true)
-        addLog("Backendga login so'rovi yuborilmoqda...")
+        addLog(`Login so'rovi yuborilmoqda: Telegram ID ${tgUser.id}`)
+
         try {
           await authContext.telegramLogin({
             ...tgUser,
             telegram_id: tgUser.id,
             init_data: initData,
             auth_date: Math.floor(Date.now() / 1000),
-            hash: '', 
+            hash: '',
           })
           addLog("Login muvaffaqiyatli yakunlandi!")
         } catch (err: any) {
           addLog(`XATOLIK: Login amalga oshmadi: ${err.message}`)
-          console.error(err)
+          console.error('TMA Auth Error:', err)
         } finally {
           setIsLoggingIn(false)
         }
       }
 
       handleTelegramAutoLogin()
+    } else if (isReady && !tgUser) {
+      // Bu xabar faqat monitoring uchun, oddiy brauzerda chiqadi
+      addLog("Telegram foydalanuvchisi aniqlanmadi.")
     }
   }, [isReady, tgUser, isAuthenticated, authContext, initData, isLoggingIn])
 
-  // Accessibility sozlamalari
+  // 3. Accessibility (Ko'zi ojizlar uchun) sozlamalari
   useEffect(() => {
     if (typeof window === 'undefined') return
     const accessibility = new Accessibility({
@@ -78,7 +86,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => accessibility?.destroy?.()
   }, [t])
 
-  // Layoutni yashirish kerak bo'lgan sahifalar
+  // Layout yashirilishi kerak bo'lgan sahifalar ruyxati
   const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
   const shouldShowLayout = !noLayoutPages.some(page => pathname.includes(page))
 
@@ -87,28 +95,30 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <div className={`flex min-h-screen flex-col ${isMobile ? 'tma-container' : ''}`}>
       {!isMobile && <CHeader />}
-      
+
       <main className={`flex-grow ${isMobile ? 'pb-20' : 'container mx-auto px-4'}`}>
         {children}
 
-        {/* DEBUG LOGGER SECTION - FAQAT MONITORING UCHUN */}
-        <div className="mt-6 p-4 bg-gray-900 text-green-400 text-[11px] font-mono rounded-xl mx-2 shadow-2xl border border-gray-700">
-          <div className="flex justify-between items-center mb-2 border-b border-gray-700 pb-2">
-             <span className="font-bold uppercase tracking-wider text-xs">System Debug Logs</span>
-             <span className="bg-green-900 text-[9px] px-2 py-0.5 rounded text-green-100">Live</span>
-          </div>
-          <div className="space-y-1">
-            {logs.map((log, i) => (
-              <div key={i} className="border-l border-green-800 pl-2">{log}</div>
-            ))}
-            <div className="mt-2 pt-2 border-t border-gray-800 text-gray-400 grid grid-cols-2 gap-1">
-               <div>Auth: <span className={isAuthenticated ? "text-green-500":"text-red-500"}>{isAuthenticated ? 'YES' : 'NO'}</span></div>
-               <div>TMA Ready: <span>{isReady ? 'YES' : 'NO'}</span></div>
-               <div>TG User: <span className="text-blue-400">{tgUser ? (tgUser.username || tgUser.id) : 'NONE'}</span></div>
-               <div>Mobile: <span>{isMobile ? 'YES' : 'NO'}</span></div>
+        {/* DEBUG MONITORING - FAQAT TESTING JALAYONIDA KERAK */}
+        {isMobile && (
+          <div className="mt-8 p-4 bg-gray-900 text-green-400 text-[10px] font-mono rounded-2xl mx-2 border border-gray-700 shadow-xl">
+            <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-2">
+              <span className="font-bold uppercase opacity-70">TMA System Logs</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              {logs.map((log, i) => (
+                <div key={i} className="opacity-90">{log}</div>
+              ))}
+              <div className="mt-2 pt-2 border-t border-gray-800 text-[9px] text-gray-500 grid grid-cols-2 gap-x-4">
+                <div>AUTH: <span className={isAuthenticated ? "text-green-500" : "text-red-500"}>{isAuthenticated ? 'YES' : 'NO'}</span></div>
+                <div>TMA READY: <span>{isReady ? 'YES' : 'NO'}</span></div>
+                <div>TG USER: <span className="text-blue-400">{tgUser ? (tgUser.username || tgUser.id) : 'NOT_FOUND'}</span></div>
+                <div>PATH: <span>{pathname}</span></div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
 
       {!isMobile && <CFooter />}
