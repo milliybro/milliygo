@@ -132,7 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoginModalOpen(false)
         
         if (!router.pathname.includes('account')) {
-          router.push('/account/account-management')
+          router.push('/profile')
         }
         
         message.success(t('user.login-success') || 'Muvaffaqiyatli kirdingiz', 2)

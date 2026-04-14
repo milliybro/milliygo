@@ -95,30 +95,6 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
       <main className={`flex-grow ${isMobile ? 'pb-20' : 'container mx-auto px-4'}`}>
         {children}
-
-        {/* MONITORING LOGGER */}
-        {isMobile && (
-          <div className="mt-8 p-4 bg-gray-900 text-green-400 text-[10px] font-mono rounded-2xl mx-2 border border-gray-700 shadow-xl">
-            <div className="flex justify-between items-center mb-2 border-b border-gray-700 pb-2">
-              <span className="font-bold opacity-70 uppercase tracking-widest text-[9px]">TWA-SDK Monitoring</span>
-              <div className="flex gap-1">
-                <div className={`w-2 h-2 rounded-full ${isReady ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                {isLoggingIn && <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />}
-              </div>
-            </div>
-            <div className="space-y-1">
-              {logs.map((log, i) => (
-                <div key={i} className="leading-relaxed">{log}</div>
-              ))}
-              <div className="mt-2 pt-2 border-t border-gray-800 text-[9px] text-gray-500 grid grid-cols-2 gap-2">
-                <div>Auth: <span className={isAuthenticated ? "text-green-500" : "text-red-500"}>{isAuthenticated ? 'YES' : 'NO'}</span></div>
-                <div>Ready: <span>{isReady ? 'YES' : 'NO'}</span></div>
-                <div>TG User: <span className="text-blue-400">{tgUser ? (tgUser.username || tgUser.id) : 'NOT_FOUND'}</span></div>
-                <div>SDK: <span className="text-purple-400">@twa-dev/sdk</span></div>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
 
       {!isMobile && <CFooter />}
