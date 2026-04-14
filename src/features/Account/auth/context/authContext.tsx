@@ -141,6 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       hide()
       console.error('Telegram login error:', error)
       const errorMsg = error.response?.data?.detail || error.message || t('user.api-error')
+      alert(`DEBUG: Telegram login failure: ${errorMsg}`)
       message.error(`${t('login_error') || 'Kirishda xatolik'}: ${errorMsg}`)
     }
   }

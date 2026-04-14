@@ -52,6 +52,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
           })
         } catch (err: any) {
           console.error('Telegram auto-login failure:', err)
+          alert(`DEBUG: Auto-login failed: ${err.message}`)
         } finally {
           setIsLoggingIn(false)
         }

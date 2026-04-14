@@ -14,8 +14,15 @@ export const useTelegram = () => {
         webapp.ready()
         webapp.expand()
         setTg(webapp)
-        setUser(webapp.initDataUnsafe?.user || null)
-        setInitData(webapp.initData || '')
+        
+        if (webapp.initDataUnsafe?.user) {
+          setUser(webapp.initDataUnsafe.user)
+          setInitData(webapp.initData || '')
+          // alert(`DEBUG: TMA User found: ${webapp.initDataUnsafe.user.id}`)
+        } else {
+          // alert("DEBUG: TMA WebApp detected, but NO user data found.")
+        }
+        
         setIsReady(true)
       }
     }
