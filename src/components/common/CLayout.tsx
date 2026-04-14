@@ -15,13 +15,14 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const { pathname } = useRouter()
   const authContext = useContext(AuthContext)
   const [isMobile, setIsMobile] = useState(false)
-  const { user: tgUser, initData, isReady } = useTelegram()
+  
+  // Hook dan loglarni ham olamiz
+  const { user: tgUser, initData, isReady, logs, addLog } = useTelegram()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const authStore = authContext?.authStore
   const isAuthenticated = authStore?.isAuthenticated
 
-  // 1. Detect screen size
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize()
@@ -29,20 +30,14 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // 2. Professional Telegram Auto-Login logic
   useEffect(() => {
-    // Wait until SDK is ready and check if we already have an authenticated session
     if (!isReady || isAuthenticated || !authContext?.telegramLogin) return
-
-    // If we're on a page that doesn't need layout/auth, skip
-    const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
-    if (noLayoutPages.some(page => pathname.includes(page))) return
 
     if (tgUser && !isLoggingIn) {
       const handleTelegramAutoLogin = async () => {
         setIsLoggingIn(true)
+        addLog("Backendga login so'rovi yuborilmoqda...")
         try {
-          console.log('Professional TMA Login initiated for user:', tgUser.id)
           await authContext.telegramLogin({
             ...tgUser,
             telegram_id: tgUser.id,
@@ -50,9 +45,10 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
             auth_date: Math.floor(Date.now() / 1000),
             hash: '', 
           })
+          addLog("Login muvaffaqiyatli yakunlandi!")
         } catch (err: any) {
-          console.error('Telegram auto-login failure:', err)
-          alert(`DEBUG: Auto-login failed: ${err.message}`)
+          addLog(`XATOLIK: Login amalga oshmadi: ${err.message}`)
+          console.error(err)
         } finally {
           setIsLoggingIn(false)
         }
@@ -60,12 +56,11 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
       handleTelegramAutoLogin()
     }
-  }, [isReady, tgUser, isAuthenticated, authContext, initData, pathname, isLoggingIn])
+  }, [isReady, tgUser, isAuthenticated, authContext, initData, isLoggingIn])
 
-  // 3. Accessibility settings
+  // Accessibility sozlamalari
   useEffect(() => {
     if (typeof window === 'undefined') return
-
     const accessibility = new Accessibility({
       textPixelMode: true,
       labels: {
@@ -80,41 +75,42 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
         backgroundColor: 'rgba(255, 255, 255, 0.33)',
       }
     })
-
     return () => accessibility?.destroy?.()
   }, [t])
 
-  // Show splash screen while initializing or logging in via TMA
-  if (!isReady || isLoggingIn) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-white">
-        <div className="animate-pulse mb-6">
-           <Logo className="text-[60px] text-primary" />
-        </div>
-        <div className="flex flex-col items-center gap-2">
-            <span className="text-[16px] font-bold text-gray-800 animate-bounce">
-               Milliy-Go
-            </span>
-            <span className="text-[12px] text-gray-400">
-               {isLoggingIn ? 'Akkauntga kirilmoqda...' : 'Yuklanmoqda...'}
-            </span>
-        </div>
-      </div>
-    )
-  }
-
-  // Hide layout for specific pages
+  // Layoutni yashirish kerak bo'lgan sahifalar
   const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
-  if (noLayoutPages.some(page => pathname.includes(page))) {
-    return <>{children}</>
-  }
+  const shouldShowLayout = !noLayoutPages.some(page => pathname.includes(page))
+
+  if (!shouldShowLayout) return <>{children}</>
 
   return (
     <div className={`flex min-h-screen flex-col ${isMobile ? 'tma-container' : ''}`}>
       {!isMobile && <CHeader />}
+      
       <main className={`flex-grow ${isMobile ? 'pb-20' : 'container mx-auto px-4'}`}>
         {children}
+
+        {/* DEBUG LOGGER SECTION - FAQAT MONITORING UCHUN */}
+        <div className="mt-6 p-4 bg-gray-900 text-green-400 text-[11px] font-mono rounded-xl mx-2 shadow-2xl border border-gray-700">
+          <div className="flex justify-between items-center mb-2 border-b border-gray-700 pb-2">
+             <span className="font-bold uppercase tracking-wider text-xs">System Debug Logs</span>
+             <span className="bg-green-900 text-[9px] px-2 py-0.5 rounded text-green-100">Live</span>
+          </div>
+          <div className="space-y-1">
+            {logs.map((log, i) => (
+              <div key={i} className="border-l border-green-800 pl-2">{log}</div>
+            ))}
+            <div className="mt-2 pt-2 border-t border-gray-800 text-gray-400 grid grid-cols-2 gap-1">
+               <div>Auth: <span className={isAuthenticated ? "text-green-500":"text-red-500"}>{isAuthenticated ? 'YES' : 'NO'}</span></div>
+               <div>TMA Ready: <span>{isReady ? 'YES' : 'NO'}</span></div>
+               <div>TG User: <span className="text-blue-400">{tgUser ? (tgUser.username || tgUser.id) : 'NONE'}</span></div>
+               <div>Mobile: <span>{isMobile ? 'YES' : 'NO'}</span></div>
+            </div>
+          </div>
+        </div>
       </main>
+
       {!isMobile && <CFooter />}
       {isMobile && <BottomNavigation />}
     </div>

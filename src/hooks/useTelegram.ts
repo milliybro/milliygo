@@ -5,58 +5,67 @@ export const useTelegram = () => {
   const [tg, setTg] = useState<any>(null)
   const [user, setUser] = useState<any>(null)
   const [initData, setInitData] = useState<string>('')
+  const [logs, setLogs] = useState<string[]>([])
+
+  const addLog = (msg: string) => {
+    setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`])
+  }
 
   useEffect(() => {
+    addLog("SDK qidirish boshlandi...")
+    
     const initWebApp = () => {
       const webapp = (window as any).Telegram?.WebApp
       
       if (webapp) {
+        addLog("SDK topildi!")
         webapp.ready()
         webapp.expand()
         setTg(webapp)
         
         if (webapp.initDataUnsafe?.user) {
+          addLog(`User ma'lumoti olindi: ${webapp.initDataUnsafe.user.id}`)
           setUser(webapp.initDataUnsafe.user)
           setInitData(webapp.initData || '')
-          // alert(`DEBUG: TMA User found: ${webapp.initDataUnsafe.user.id}`)
         } else {
-          // alert("DEBUG: TMA WebApp detected, but NO user data found.")
+          addLog("User ma'lumoti topilmadi (InitDataUnsafe bo'sh).")
         }
-        
         setIsReady(true)
       }
     }
 
-    // Attempt to initialize immediately if SDK is already loaded
     if ((window as any).Telegram?.WebApp) {
       initWebApp()
     } else {
-      // Otherwise, poll for a short period
       const interval = setInterval(() => {
-        if ((window as any).Telegram?.WebApp) {
+        const webapp = (window as any).Telegram?.WebApp
+        if (webapp) {
           initWebApp()
           clearInterval(interval)
+        } else {
+          addLog("SDK hali kutilyapti...")
         }
-      }, 100)
+      }, 500)
       
-      const timeout = setTimeout(() => {
+      setTimeout(() => {
         clearInterval(interval)
-        // If not in TMA environment, we still set ready to true so app can continue
-        if (!isReady) setIsReady(true)
-      }, 3000)
+        if (!isReady) {
+          addLog("SDK kutish vaqti tugadi (Timeout 5s).")
+          setIsReady(true)
+        }
+      }, 5000)
 
-      return () => {
-        clearInterval(interval)
-        clearTimeout(timeout)
-      }
+      return () => clearInterval(interval)
     }
-  }, [isReady])
+  }, [])
 
   return {
     tg,
     user,
     initData,
     isReady,
+    logs,
+    addLog,
     onClose: () => tg?.close(),
   }
 }
