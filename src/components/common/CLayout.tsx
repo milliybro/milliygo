@@ -16,14 +16,14 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const authContext = useContext(AuthContext)
   const [isMobile, setIsMobile] = useState(false)
 
-  // Hook orqali Telegram ma'lumotlari va loglarni olamiz
+  // Yangilangan hook dan foydalanamiz
   const { user: tgUser, initData, isReady, logs, addLog } = useTelegram()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const authStore = authContext?.authStore
   const isAuthenticated = authStore?.isAuthenticated
 
-  // 1. Ekran o'lchamini aniqlash (Mobile yoki Desktop)
+  // Ekran o'lchamini aniqlash
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     handleResize()
@@ -31,42 +31,47 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // 2. Telegram Auto-Login mantiqi
+  // Professional Telegram Auto-Login (Siz ko'rsatgan loyiha uslubida)
   useEffect(() => {
-    // SDK tayyor bo'lishini va foydalanuvchi login bo'lmaganini tekshiramiz
     if (!isReady || isAuthenticated || !authContext?.telegramLogin) return
 
-    // Agarda foydalanuvchi ma'lumotlari bo'lsa, login so'rovini yuboramiz
+    // Login bo'lishi kerak bo'lgan sahifalarni tekshirish (ixtiyoriy)
+    const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
+    if (noLayoutPages.some(page => pathname.includes(page))) return
+
     if (tgUser && tgUser.id && !isLoggingIn) {
       const handleTelegramAutoLogin = async () => {
         setIsLoggingIn(true)
-        addLog(`Login so'rovi yuborilmoqda: Telegram ID ${tgUser.id}`)
+        addLog(`Login jarayoni birmartalik ID: ${tgUser.id}`)
 
         try {
+          // Tokenlarni tozalash (yangi login uchun)
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+
           await authContext.telegramLogin({
-            ...tgUser,
-            telegram_id: tgUser.id,
-            init_data: initData,
-            auth_date: Math.floor(Date.now() / 1000),
-            hash: '',
+            telegram_id: String(tgUser.id),
+            first_name: tgUser.first_name,
+            last_name: tgUser.last_name || '',
+            username: tgUser.username || '',
+            init_data: initData, // Backend tekshiruvi uchun
+            auth_date: Math.floor(Date.now() / 1000)
           })
-          addLog("Login muvaffaqiyatli yakunlandi!")
+
+          addLog("Muvaffaqiyatli kirildi!")
         } catch (err: any) {
-          addLog(`XATOLIK: Login amalga oshmadi: ${err.message}`)
-          console.error('TMA Auth Error:', err)
+          addLog(`KIRISHDA XATO: ${err.message}`)
+          console.error('TMA login error:', err)
         } finally {
           setIsLoggingIn(false)
         }
       }
 
       handleTelegramAutoLogin()
-    } else if (isReady && !tgUser) {
-      // Bu xabar faqat monitoring uchun, oddiy brauzerda chiqadi
-      addLog("Telegram foydalanuvchisi aniqlanmadi.")
     }
-  }, [isReady, tgUser, isAuthenticated, authContext, initData, isLoggingIn])
+  }, [isReady, tgUser, isAuthenticated, authContext, initData, isLoggingIn, pathname])
 
-  // 3. Accessibility (Ko'zi ojizlar uchun) sozlamalari
+  // Accessibility sozlamalari
   useEffect(() => {
     if (typeof window === 'undefined') return
     const accessibility = new Accessibility({
@@ -86,7 +91,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => accessibility?.destroy?.()
   }, [t])
 
-  // Layout yashirilishi kerak bo'lgan sahifalar ruyxati
+  // Layoutni yashirish
   const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
   const shouldShowLayout = !noLayoutPages.some(page => pathname.includes(page))
 
@@ -99,22 +104,25 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
       <main className={`flex-grow ${isMobile ? 'pb-20' : 'container mx-auto px-4'}`}>
         {children}
 
-        {/* DEBUG MONITORING - FAQAT TESTING JALAYONIDA KERAK */}
+        {/* MONITORING LOGGER */}
         {isMobile && (
           <div className="mt-8 p-4 bg-gray-900 text-green-400 text-[10px] font-mono rounded-2xl mx-2 border border-gray-700 shadow-xl">
             <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-2">
-              <span className="font-bold uppercase opacity-70">TMA System Logs</span>
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="font-bold opacity-70 uppercase tracking-widest text-[9px]">TWA-SDK Monitoring</span>
+              <div className="flex gap-1">
+                <div className={`w-2 h-2 rounded-full ${isReady ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                {isLoggingIn && <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />}
+              </div>
             </div>
             <div className="space-y-1">
               {logs.map((log, i) => (
-                <div key={i} className="opacity-90">{log}</div>
+                <div key={i} className="leading-relaxed">{log}</div>
               ))}
-              <div className="mt-2 pt-2 border-t border-gray-800 text-[9px] text-gray-500 grid grid-cols-2 gap-x-4">
-                <div>AUTH: <span className={isAuthenticated ? "text-green-500" : "text-red-500"}>{isAuthenticated ? 'YES' : 'NO'}</span></div>
-                <div>TMA READY: <span>{isReady ? 'YES' : 'NO'}</span></div>
-                <div>TG USER: <span className="text-blue-400">{tgUser ? (tgUser.username || tgUser.id) : 'NOT_FOUND'}</span></div>
-                <div>PATH: <span>{pathname}</span></div>
+              <div className="mt-2 pt-2 border-t border-gray-800 text-[9px] text-gray-500 grid grid-cols-2 gap-2">
+                <div>Auth: <span className={isAuthenticated ? "text-green-500" : "text-red-500"}>{isAuthenticated ? 'YES' : 'NO'}</span></div>
+                <div>Ready: <span>{isReady ? 'YES' : 'NO'}</span></div>
+                <div>TG User: <span className="text-blue-400">{tgUser ? (tgUser.username || tgUser.id) : 'NOT_FOUND'}</span></div>
+                <div>SDK: <span className="text-purple-400">@twa-dev/sdk</span></div>
               </div>
             </div>
           </div>

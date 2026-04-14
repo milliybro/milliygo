@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
+import WebApp from '@twa-dev/sdk'
 
 export const useTelegram = () => {
-  const [isReady, setIsReady] = useState(false)
-  const [tg, setTg] = useState<any>(null)
   const [user, setUser] = useState<any>(null)
-  const [initData, setInitData] = useState<string>('')
+  const [isReady, setIsReady] = useState(false)
   const [logs, setLogs] = useState<string[]>([])
 
   const addLog = (msg: string) => {
@@ -12,51 +11,36 @@ export const useTelegram = () => {
   }
 
   useEffect(() => {
-    addLog("SDK qidirish boshlandi...")
+    try {
+      addLog("SDK yuklanmoqda (twa-dev/sdk)...")
 
-    const initWebApp = () => {
-      if (typeof window === 'undefined') return
+      // WebApp ni tayyorlash
+      WebApp.ready()
+      WebApp.expand()
+      WebApp.enableClosingConfirmation()
 
-      const webapp = (window as any).Telegram?.WebApp
+      const initData = WebApp.initDataUnsafe
 
-      if (webapp && webapp.initDataUnsafe?.user) {
-        addLog("SDK va User topildi!")
-        webapp.ready()
-        webapp.expand()
-        setTg(webapp)
-        setUser(webapp.initDataUnsafe.user)
-        setInitData(webapp.initData || '')
-        setIsReady(true)
-      } else if (webapp) {
-        addLog("SDK bor, lekin foydalanuvchi ma'lumoti yo'q.")
-        setTg(webapp)
-        setIsReady(true)
+      if (initData && initData.user) {
+        addLog(`Foydalanuvchi ma'lumotlari olindi: ${initData.user.id}`)
+        setUser(initData.user)
+      } else {
+        addLog("DIQQAT: Foydalanuvchi ma'lumoti yo'q (InitDataUnsafe bo'sh)")
       }
+
+      setIsReady(true)
+    } catch (err: any) {
+      addLog(`SDK XATOLIGI: ${err.message}`)
+      setIsReady(true) // Xato bo'lsa ham app davom etishi uchun
     }
+  }, [])
 
-    // Agarda SDK 3 soniya ichida topilmasa, tayyor deb hisoblab davom etamiz
-    const timeout = setTimeout(() => {
-      if (!isReady) {
-        addLog("SDK kutish tugadi (Browser rejimida davom etiladi).")
-        setIsReady(true)
-      }
-    }, 3000)
-
-    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-      initWebApp()
-    } else {
-      const interval = setInterval(() => {
-        if ((window as any).Telegram?.WebApp?.initDataUnsafe?.user) {
-          initWebApp()
-          clearInterval(interval)
-        }
-      }, 500)
-      return () => {
-        clearInterval(interval)
-        clearTimeout(timeout)
-      }
-    }
-  }, [isReady])
-
-  return { tg, user, initData, isReady, logs, addLog, onClose: () => tg?.close() }
+  return {
+    user,
+    initData: WebApp.initData,
+    isReady,
+    logs,
+    addLog,
+    WebApp
+  }
 }
