@@ -17,6 +17,7 @@ export const useTelegram = () => {
       const tg = (window as any).Telegram?.WebApp
       let rawInitData = tg?.initData || ''
       let userData = tg?.initDataUnsafe?.user
+      addLog("TO'LIQ URL: " + window.location.href)
 
       // 1. Agar redirect bo'lgan bo'lsa, ma'lumotlarni LocalStorage'dan tekshiramiz
       if (!userData) {
