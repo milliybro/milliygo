@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import WebApp from '@twa-dev/sdk'
 
 export const useTelegram = () => {
   const [user, setUser] = useState<any>(null)
   const [isReady, setIsReady] = useState(false)
+  const [initData, setInitData] = useState<string>('')
   const [logs, setLogs] = useState<string[]>([])
 
   const addLog = (msg: string) => {
@@ -11,36 +11,34 @@ export const useTelegram = () => {
   }
 
   useEffect(() => {
-    try {
-      addLog("SDK yuklanmoqda (twa-dev/sdk)...")
+    // SDK ni faqat useEffect ichida (brauzerda) yuklaymiz
+    const initTMA = async () => {
+      try {
+        addLog("SDK yuklanmoqda (twa-dev/sdk)...")
+        const WebApp = (await import('@twa-dev/sdk')).default
 
-      // WebApp ni tayyorlash
-      WebApp.ready()
-      WebApp.expand()
-      WebApp.enableClosingConfirmation()
+        WebApp.ready()
+        WebApp.expand()
+        WebApp.enableClosingConfirmation()
 
-      const initData = WebApp.initDataUnsafe
+        const data = WebApp.initDataUnsafe
 
-      if (initData && initData.user) {
-        addLog(`Foydalanuvchi ma'lumotlari olindi: ${initData.user.id}`)
-        setUser(initData.user)
-      } else {
-        addLog("DIQQAT: Foydalanuvchi ma'lumoti yo'q (InitDataUnsafe bo'sh)")
+        if (data && data.user) {
+          addLog(`Foydalanuvchi aniqlandi: ${data.user.id}`)
+          setUser(data.user)
+          setInitData(WebApp.initData)
+        } else {
+          addLog("Foydalanuvchi ma'lumoti yo'q.")
+        }
+        setIsReady(true)
+      } catch (err: any) {
+        addLog(`SDK Xatoligi: ${err.message}`)
+        setIsReady(true)
       }
-
-      setIsReady(true)
-    } catch (err: any) {
-      addLog(`SDK XATOLIGI: ${err.message}`)
-      setIsReady(true) // Xato bo'lsa ham app davom etishi uchun
     }
+
+    initTMA()
   }, [])
 
-  return {
-    user,
-    initData: WebApp.initData,
-    isReady,
-    logs,
-    addLog,
-    WebApp
-  }
+  return { user, initData, isReady, logs, addLog }
 }

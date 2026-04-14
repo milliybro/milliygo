@@ -8,7 +8,6 @@ import CHeader from './CHeader'
 import BottomNavigation from './BottomNavigation'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
 import { useTelegram } from '@/hooks/useTelegram'
-import Logo from '@/components/icons/logo'
 
 const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const t = useTranslations()
@@ -16,52 +15,46 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   const authContext = useContext(AuthContext)
   const [isMobile, setIsMobile] = useState(false)
 
-  // Yangilangan hook dan foydalanamiz
   const { user: tgUser, initData, isReady, logs, addLog } = useTelegram()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const authStore = authContext?.authStore
   const isAuthenticated = authStore?.isAuthenticated
 
-  // Ekran o'lchamini aniqlash
   useEffect(() => {
+    setIsMobile(window.innerWidth < 768)
     const handleResize = () => setIsMobile(window.innerWidth < 768)
-    handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Professional Telegram Auto-Login (Siz ko'rsatgan loyiha uslubida)
   useEffect(() => {
     if (!isReady || isAuthenticated || !authContext?.telegramLogin) return
-
-    // Login bo'lishi kerak bo'lgan sahifalarni tekshirish (ixtiyoriy)
-    const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
-    if (noLayoutPages.some(page => pathname.includes(page))) return
 
     if (tgUser && tgUser.id && !isLoggingIn) {
       const handleTelegramAutoLogin = async () => {
         setIsLoggingIn(true)
-        addLog(`Login jarayoni birmartalik ID: ${tgUser.id}`)
+        addLog(`Login boshlandi: ${tgUser.id}`)
 
         try {
-          // Tokenlarni tozalash (yangi login uchun)
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
+          // SSR xavfsiz bo'lishi uchun localStorage'ni tekshirib ishlatamiz
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+          }
 
           await authContext.telegramLogin({
             telegram_id: String(tgUser.id),
             first_name: tgUser.first_name,
             last_name: tgUser.last_name || '',
             username: tgUser.username || '',
-            init_data: initData, // Backend tekshiruvi uchun
+            init_data: initData,
             auth_date: Math.floor(Date.now() / 1000)
           })
 
           addLog("Muvaffaqiyatli kirildi!")
         } catch (err: any) {
           addLog(`KIRISHDA XATO: ${err.message}`)
-          console.error('TMA login error:', err)
         } finally {
           setIsLoggingIn(false)
         }
@@ -69,9 +62,9 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
 
       handleTelegramAutoLogin()
     }
-  }, [isReady, tgUser, isAuthenticated, authContext, initData, isLoggingIn, pathname])
+  }, [isReady, tgUser, isAuthenticated, authContext, initData, isLoggingIn])
 
-  // Accessibility sozlamalari
+  // Accessibility
   useEffect(() => {
     if (typeof window === 'undefined') return
     const accessibility = new Accessibility({
@@ -91,7 +84,6 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
     return () => accessibility?.destroy?.()
   }, [t])
 
-  // Layoutni yashirish
   const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
   const shouldShowLayout = !noLayoutPages.some(page => pathname.includes(page))
 
@@ -107,7 +99,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
         {/* MONITORING LOGGER */}
         {isMobile && (
           <div className="mt-8 p-4 bg-gray-900 text-green-400 text-[10px] font-mono rounded-2xl mx-2 border border-gray-700 shadow-xl">
-            <div className="flex justify-between items-center mb-2 border-b border-gray-800 pb-2">
+            <div className="flex justify-between items-center mb-2 border-b border-gray-700 pb-2">
               <span className="font-bold opacity-70 uppercase tracking-widest text-[9px]">TWA-SDK Monitoring</span>
               <div className="flex gap-1">
                 <div className={`w-2 h-2 rounded-full ${isReady ? 'bg-green-500' : 'bg-yellow-500'}`} />
