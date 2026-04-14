@@ -24,7 +24,7 @@ export const useTelegram = () => {
         addLog(`Version: ${WebApp.version}`)
 
         const data = WebApp.initDataUnsafe
-        
+        addLog(`InitDataUnsafe: ${JSON.stringify(data)}`)
         if (data && data.user) {
           addLog(`Foydalanuvchi aniqlandi: ${data.user.id}`)
           setUser(data.user)
