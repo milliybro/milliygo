@@ -12,34 +12,38 @@ export const useTelegram = () => {
   }
 
   useEffect(() => {
-    const initTMA = async () => {
-      try {
-        addLog("SDK yuklanmoqda...")
-        const WebApp = (await import('@twa-dev/sdk')).default
-        
-        WebApp.ready()
-        
-        // Muhim: Qaysi platformada ekanligimizni ko'ramiz
-        addLog(`Platform: ${WebApp.platform}`)
-        addLog(`Version: ${WebApp.version}`)
+    const checkTMA = () => {
+      addLog("Oddiy window tekshiruvi...")
 
-        const data = WebApp.initDataUnsafe
-        addLog(`InitDataUnsafe: ${JSON.stringify(data)}`)
-        if (data && data.user) {
-          addLog(`Foydalanuvchi aniqlandi: ${data.user.id}`)
-          setUser(data.user)
-          setInitData(WebApp.initData)
+      // Siz aytgan usulda tekshiramiz:
+      const tg = (window as any).Telegram?.WebApp
+
+      if (tg) {
+        addLog("window.Telegram.WebApp TOPILDI!")
+
+        const userData = tg.initDataUnsafe?.user
+        if (userData) {
+          addLog(`Muvaffaqiyat! User ID: ${userData.id}`)
+          setUser(userData)
+          setInitData(tg.initData)
         } else {
-          addLog("Foydalanuvchi ma'lumoti yo'q (InitDataUnsafe bo'sh).")
+          addLog("Xatolik: WebApp bor, lekin initDataUnsafe.user BO'SH")
+          addLog(`Xom ma'lumot: ${JSON.stringify(tg.initDataUnsafe || {})}`)
         }
-        setIsReady(true)
-      } catch (err: any) {
-        addLog(`SDK Xatoligi: ${err.message}`)
-        setIsReady(true)
+      } else {
+        addLog("window.Telegram mavjud emas.")
       }
+
+      setIsReady(true)
     }
 
-    initTMA()
+    // Brauzer yuklanishi uchun biroz kutamiz
+    if (document.readyState === 'complete') {
+      checkTMA()
+    } else {
+      window.addEventListener('load', checkTMA)
+      return () => window.removeEventListener('load', checkTMA)
+    }
   }, [])
 
   return { user, initData, isReady, logs, addLog }
