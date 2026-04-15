@@ -3,6 +3,8 @@ import { useCartStore } from '@/store/cartStore'
 import Image from 'next/image'
 import { useContext } from 'react'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
+import { message } from 'antd'
+import { useLocationStore } from '@/store/useLocationStore'
 
 const DELIVERY_FEE = 8000
 const FREE_DELIVERY_THRESHOLD = 60000
@@ -25,6 +27,8 @@ const StoreItemCart = ({
     const authContext = useContext(AuthContext) as any
     const openLogin = authContext?.openLogin
     const isAuthenticated = authContext?.authStore?.isAuthenticated
+
+    const { isInServiceArea } = useLocationStore()
 
     const subtotal = cartItems.reduce((s: number, i: any) => s + i.price * i.quantity, 0)
     const serviceFee = Math.round(subtotal * SERVICE_FEE_PERCENT)
@@ -149,15 +153,25 @@ const StoreItemCart = ({
                     <div className="px-4 pb-4">
                         <button
                             onClick={() => {
+                                if (!isInServiceArea) {
+                                    message.warning('Kechirasiz, bu hududda xizmat ko\'rsata olmaymiz. Iltimos, xizmat hududini tanlang.')
+                                    return
+                                }
                                 if (isAuthenticated) {
                                     router.push(`/cart`)
                                 } else {
                                     openLogin?.()
                                 }
                             }}
-                            className="w-full bg-[#FFD600] hover:bg-[#FFC800] active:scale-[0.98] transition-all rounded-2xl py-3.5 flex items-center justify-between px-5 shadow-sm"
+                            className={`w-full transition-all rounded-2xl py-3.5 flex items-center justify-between px-5 shadow-sm ${
+                                !isInServiceArea 
+                                ? 'bg-gray-200 cursor-not-allowed opacity-70' 
+                                : 'bg-[#FFD600] hover:bg-[#FFC800] active:scale-[0.98]'
+                            }`}
                         >
-                            <span className="text-[15px] font-bold text-gray-900">Davom etish</span>
+                            <span className="text-[15px] font-bold text-gray-900">
+                                {!isInServiceArea ? 'Xizmat hududidan tashqari' : 'Davom etish'}
+                            </span>
                             <span className="text-[15px] font-bold text-gray-900">{fmt(total)}</span>
                         </button>
                     </div>

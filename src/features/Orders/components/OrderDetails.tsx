@@ -16,6 +16,7 @@ import {
     TruckOutlined
 } from '@ant-design/icons'
 import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps'
+import { YANDEX_API_KEY } from '@/constants/api-keys'
 import dayjs from 'dayjs'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -363,7 +364,7 @@ const OrderDetails = ({ uuid }: { uuid: string }) => {
                         </div>
 
                         <div className="h-[240px] w-full relative group">
-                            <YMaps query={{ apikey: 'fe54f19b-c408-41e7-8b01-925206263595', lang: 'ru_RU' }}>
+                            <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' }}>
                                 <Map
                                     state={{
                                         center: [Number(order.latitude), Number(order.longitude)],

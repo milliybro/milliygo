@@ -101,7 +101,7 @@ function Login({ isModal }: { isModal?: boolean }) {
           <div className="flex h-full max-w-[486px] flex-col dsm:max-w-[350px]">
             <div className="flex-1" />
             <div className="mb-3 hidden w-full justify-center dmd:flex">
-              <Logo className="text-[24px]" />
+              {/* <Logo className="text-[24px]" /> */}
             </div>
             <FirstStep
               onLogin={(data) => loginActionMutate(data)}
@@ -109,7 +109,7 @@ function Login({ isModal }: { isModal?: boolean }) {
               nextPageHandler={() => { }}
             />
 
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <div className="relative mb-6 text-center">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-gray-200" />
@@ -120,7 +120,7 @@ function Login({ isModal }: { isModal?: boolean }) {
               </div>
               <ThirdPartyLogin />
             </div>
-
+*/}
 
 
             <div className="flex-1 mt-4" />

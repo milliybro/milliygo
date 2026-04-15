@@ -5,6 +5,8 @@ import { useRouter } from 'next/router'
 import NextNProgress from 'nextjs-progressbar'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { YMaps } from '@pbe/react-yandex-maps'
+import { YANDEX_API_KEY } from '@/constants/api-keys'
 
 import type { AppProps } from 'next/app'
 
@@ -80,10 +82,12 @@ const App = ({ Component, pageProps }: AppProps) => {
               <AuthProvider>
                 <NextNProgress color={colors.primary} height={2} options={{ showSpinner: false }} />
                 <GlobalLoginModal />
-                <CLayout>
-                  <Component {...pageProps} />
-                  <SupportChat />
-                </CLayout>
+                <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' }}>
+                  <CLayout>
+                    <Component {...pageProps} />
+                    <SupportChat />
+                  </CLayout>
+                </YMaps>
                 <ReactQueryDevtools initialIsOpen={false} />
               </AuthProvider>
             </QueryClientProvider>

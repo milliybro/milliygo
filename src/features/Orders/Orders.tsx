@@ -29,7 +29,7 @@ const OrderCard = ({ order }: { order: any }) => {
 
     return (
         <div 
-            onClick={() => router.push(`/orders/${order.uuid}`)}
+            onClick={() => router.push(`/orders/track?uuid=${order.uuid}`)}
             className="bg-white rounded-[24px] border border-gray-100 p-4 mb-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-all cursor-pointer"
         >
             <div className="flex items-center justify-between mb-3">

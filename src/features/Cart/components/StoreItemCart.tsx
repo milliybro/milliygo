@@ -133,7 +133,7 @@ const StoreItemCart = ({
                 clearCart(activeStoreId)
                 const orderUuid = (response as any).uuid
                 if (orderUuid) {
-                    router.push(`/orders/${orderUuid}`)
+                    router.push(`/orders/track?uuid=${orderUuid}`)
                 } else {
                     router.push('/orders')
                 }
