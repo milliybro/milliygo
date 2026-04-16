@@ -249,27 +249,23 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
             type="secondary"
             style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
           >
-            Tanlangan manzil
+            Manzilni kiriting yoki xaritadan tanlang
           </Typography.Text>
-          <div
+          <Input
+            size="large"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="Masalan: G'allaorol ko'chasi, 12-uy"
             style={{
-              marginTop: '4px',
-              padding: '12px',
-              background: '#f5f5f5',
-              borderRadius: '8px',
-              minHeight: '48px',
-              display: 'flex',
-              alignItems: 'center',
+              marginTop: '8px',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              background: '#f8f8f8',
+              border: '1px solid #eee',
+              fontSize: '15px'
             }}
-          >
-            {loading ? (
-              <Typography.Text italic>Aniqlanmoqda...</Typography.Text>
-            ) : address ? (
-              <Typography.Text strong>{address}</Typography.Text>
-            ) : (
-              <Typography.Text type="secondary">Xarita orqali manzilni tanlang</Typography.Text>
-            )}
-          </div>
+            suffix={loading && <Typography.Text italic style={{ fontSize: '12px' }}>Aniqlanmoqda...</Typography.Text>}
+          />
         </div>
 
         <Space style={{ width: '100%', justifyContent: 'flex-end' }}>

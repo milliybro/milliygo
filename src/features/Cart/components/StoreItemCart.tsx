@@ -10,15 +10,12 @@ import {
     RightOutlined,
     CheckCircleFilled
 } from '@ant-design/icons'
-import { YMaps, Map, Placemark, ZoomControl, FullscreenControl, SearchControl, GeolocationControl } from '@pbe/react-yandex-maps'
+import { useLocationStore } from '@/store/useLocationStore'
+import LocationModal from '@/components/common/CHeader/components/LocationModal'
 import dayjs from 'dayjs'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
-
-// G'allaorol center coordinates
-const GALLAOROL_COORDS = [39.998492, 67.585542]
-const MAX_DISTANCE_KM = 5 // Allowed radius for central part
 
 import { createOrder } from '../api'
 
@@ -38,11 +35,11 @@ const StoreItemCart = ({
     const isAuthenticated = authContext?.authStore?.isAuthenticated
     const openLogin = authContext?.openLogin
 
+    const { location: storeLocation } = useLocationStore()
+
     // Use logic from props if provided (from CartFullPage), otherwise use local state (legacy/fallback)
     const [localComment, setLocalComment] = useState('')
     const [localIsLocationModalOpen, setLocalIsLocationModalOpen] = useState(false)
-    const [localSelectedCoords, setLocalSelectedCoords] = useState<number[] | null>(null)
-    const [localAddressText, setLocalAddressText] = useState('Manzil tanlanmagan')
     const [localPaymentMethod, setLocalPaymentMethod] = useState('cash')
     const [localDeliveryTime, setLocalDeliveryTime] = useState<string>('Hozir')
     const [localLoading, setLocalLoading] = useState(false)
@@ -51,40 +48,20 @@ const StoreItemCart = ({
     const setComment = customLogic?.setComment ?? setLocalComment
     const isLocationModalOpen = customLogic?.isLocationModalOpen ?? localIsLocationModalOpen
     const setIsLocationModalOpen = customLogic?.setIsLocationModalOpen ?? setLocalIsLocationModalOpen
-    const selectedCoords = customLogic?.selectedCoords ?? localSelectedCoords
-    const setSelectedCoords = customLogic?.setSelectedCoords ?? setLocalSelectedCoords
-    const addressText = customLogic?.addressText ?? localAddressText
-    const setAddressText = customLogic?.setAddressText ?? setLocalAddressText
+    
+    // Derived from store
+    const selectedCoords = useMemo(() => 
+        customLogic?.selectedCoords ?? (storeLocation ? [storeLocation.lat, storeLocation.lng] : null)
+    , [customLogic?.selectedCoords, storeLocation])
+    
+    const addressText = customLogic?.addressText ?? (storeLocation?.address || 'Manzil tanlanmagan')
+    
     const paymentMethod = customLogic?.paymentMethod ?? localPaymentMethod
     const setPaymentMethod = customLogic?.setPaymentMethod ?? setLocalPaymentMethod
     const deliveryTime = customLogic?.deliveryTime ?? localDeliveryTime
     const setDeliveryTime = customLogic?.setDeliveryTime ?? setLocalDeliveryTime
     const loading = customLogic?.orderLoading ?? localLoading
 
-    // Distance calculation helper
-    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const R = 6371 // km
-        const dLat = (lat2 - lat1) * Math.PI / 180
-        const dLon = (lon2 - lon1) * Math.PI / 180
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2)
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-        return R * c
-    }
-
-    const handleMapClick = (e: any) => {
-        const coords = e.get('coords')
-        const dist = calculateDistance(coords[0], coords[1], GALLAOROL_COORDS[0], GALLAOROL_COORDS[1])
-        
-        if (dist > MAX_DISTANCE_KM) {
-            message.error("Kechirasiz, yetkazib berish faqat G'allaorol shahri ichida amalga oshiriladi.")
-            return
-        }
-        
-        setSelectedCoords(coords)
-        setAddressText(`G'allaorol (${coords[0].toFixed(4)}, ${coords[1].toFixed(4)})`)
-    }
 
     // Calculate subtotal
     const subtotal = useMemo(() => {
@@ -246,54 +223,10 @@ const StoreItemCart = ({
             </div>
 
             {/* Location Selection Modal (Desktop Sidebar) */}
-            <Modal
-                title={
-                    <div className="px-1 py-1">
-                        <Text className="text-[18px] font-bold block">Xaritadan tanlash</Text>
-                        <Text className="text-[13px] text-gray-400 font-normal">G'allaorol shahri ichida manzilni belgilang</Text>
-                    </div>
-                }
+            <LocationModal
                 open={isLocationModalOpen}
-                onCancel={() => setIsLocationModalOpen(false)}
-                footer={[
-                    <Button key="cancel" onClick={() => setIsLocationModalOpen(false)} className="rounded-xl h-10 px-6">Bekor qilish</Button>,
-                    <Button 
-                        key="submit" 
-                        type="primary" 
-                        disabled={!selectedCoords}
-                        onClick={() => setIsLocationModalOpen(false)}
-                        className="bg-[#FFD600] text-black border-none hover:bg-[#FFC800] rounded-xl h-10 px-8 font-bold"
-                    >
-                        Tasdiqlash
-                    </Button>
-                ]}
-                width={800}
-                centered
-                styles={{ body: { padding: 0 } }}
-                className="location-modal"
-            >
-                <div className="h-[500px] w-full relative">
-                    <YMaps query={{ apikey: 'fe54f19b-c408-41e7-8b01-925206263595', lang: 'ru_RU' }}>
-                        <Map 
-                            defaultState={{ center: GALLAOROL_COORDS, zoom: 14 }} 
-                            width="100%" 
-                            height="100%"
-                            onClick={handleMapClick}
-                        >
-                            <ZoomControl options={{ size: 'small' }} />
-                            <GeolocationControl options={{ float: 'left' }} />
-                            <FullscreenControl />
-                            <SearchControl options={{ float: 'right' }} />
-                            {selectedCoords && (
-                                <Placemark 
-                                    geometry={selectedCoords} 
-                                    options={{ preset: 'islands#yellowDotIcon' }}
-                                />
-                            )}
-                        </Map>
-                    </YMaps>
-                </div>
-            </Modal>
+                onClose={() => setIsLocationModalOpen(false)}
+            />
             
             <style jsx global>{`
                 .checkout-select .ant-select-selection-item { font-size: 16px !important; font-weight: 700 !important; color: #111 !important; }

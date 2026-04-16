@@ -3,31 +3,20 @@ import { useQuery } from '@tanstack/react-query'
 import { useState, useContext, useMemo } from 'react'
 
 import { useTranslations } from 'next-intl'
-import { getRestaurantsList } from '../Main/api'
-import { getRestaurantDetail, getStoreItemCategories, createOrder } from './api'
+import { getRestaurantDetail, createOrder } from './api'
 import { getAccountMe } from '@/features/Account/api'
 
-import { ICategory } from '../Main/types'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
 import { useRouter } from 'next/router'
 import { useCartStore } from '@/store/cartStore'
 import CartDetail from './components/CartDetails'
 import StoreItemCart from './components/StoreItemCart'
-import {
-  EnvironmentOutlined,
-  CreditCardOutlined,
-  ClockCircleOutlined,
-  RightOutlined,
-  CheckCircleFilled
-} from '@ant-design/icons'
-import { YMaps, Map, Placemark, ZoomControl, FullscreenControl, SearchControl, GeolocationControl } from '@pbe/react-yandex-maps'
+import { useLocationStore } from '@/store/useLocationStore'
+import LocationModal from '@/components/common/CHeader/components/LocationModal'
+import { CheckCircleFilled, CreditCardOutlined, EnvironmentOutlined, RightOutlined } from '@ant-design/icons'
 
 const { Text } = Typography
 const { TextArea } = Input
-
-// G'allaorol center coordinates
-const GALLAOROL_COORDS = [39.998492, 67.585542]
-const MAX_DISTANCE_KM = 5
 
 const CartFullPage = () => {
   const t = useTranslations()
@@ -39,14 +28,19 @@ const CartFullPage = () => {
   const isAuthenticated = authContext?.authStore?.isAuthenticated
   const openLogin = authContext?.openLogin
 
+  const { location: storeLocation } = useLocationStore()
+
   // Checkout States
   const [comment, setComment] = useState('')
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
-  const [selectedCoords, setSelectedCoords] = useState<number[] | null>(null)
-  const [addressText, setAddressText] = useState('Manzil tanlanmagan')
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [deliveryTime, setDeliveryTime] = useState<string>('Hozir')
   const [orderLoading, setOrderLoading] = useState(false)
+
+  // Derived location from store
+  const selectedCoords = useMemo(() => storeLocation ? [storeLocation.lat, storeLocation.lng] : null, [storeLocation])
+  const addressText = storeLocation?.address || 'Manzil tanlanmagan'
 
   const { data: restaurantData, isLoading: restaurantLoading } = useQuery({
     queryKey: ['restaurant-detail', querySlug],
@@ -60,33 +54,6 @@ const CartFullPage = () => {
     enabled: isAuthenticated
   })
 
-  // Distance calculation helper
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371
-    const dLat = (lat2 - lat1) * Math.PI / 180
-    const dLon = (lon2 - lon1) * Math.PI / 180
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    return R * c
-  }
-
-  const handleMapClick = (e: any) => {
-    const coords = e.get('coords')
-    const dist = calculateDistance(coords[0], coords[1], GALLAOROL_COOROL_COORDS[0], GALLAOROL_COORDS[1])
-
-    if (dist > MAX_DISTANCE_KM) {
-      message.error("Kechirasiz, yetkazib berish faqat G'allaorol shahri ichida amalga oshiriladi.")
-      return
-    }
-
-    setSelectedCoords(coords)
-    setAddressText(`G'allaorol (${coords[0].toFixed(4)}, ${coords[1].toFixed(4)})`)
-  }
-
-  const GALLAOROL_COOROL_COORDS = [39.998492, 67.585542] // Duplicate to fix local reference
-
   // Calculate subtotal
   const subtotal = useMemo(() => {
     return querySlug
@@ -94,7 +61,7 @@ const CartFullPage = () => {
       : Object.values(carts).flatMap(c => c.items || []).reduce((s: number, i: any) => s + i.price * i.quantity, 0)
   }, [carts, querySlug])
 
-  const handleCreateOrder = async () => {
+  const handleCreateOrder = () => {
     if (!isAuthenticated) {
       openLogin?.()
       return
@@ -104,7 +71,11 @@ const CartFullPage = () => {
       setIsLocationModalOpen(true)
       return
     }
+    
+    setIsConfirmModalOpen(true)
+  }
 
+  const handleConfirmOrder = async () => {
     const activeStoreId = querySlug as string || Object.keys(carts).find(id => (carts[id].items?.length || 0) > 0)
     if (!activeStoreId) return
 
@@ -117,8 +88,8 @@ const CartFullPage = () => {
         description: comment || "Izoh yo'q",
         address: addressText,
         contact_phone: userPhone,
-        latitude: String(selectedCoords[0]),
-        longitude: String(selectedCoords[1]),
+        latitude: String(selectedCoords![0]),
+        longitude: String(selectedCoords![1]),
         items: cartItems.map(item => ({
           product_uuid: item.uuid,
           quantity: item.quantity
@@ -130,6 +101,7 @@ const CartFullPage = () => {
       if (response) {
         message.success("Buyurtmangiz muvaffaqiyatli qabul qilindi!")
         clearCart(activeStoreId)
+        setIsConfirmModalOpen(false)
         const orderUuid = (response as any).uuid
         if (orderUuid) {
           router.push(`/orders/track?uuid=${orderUuid}`)
@@ -225,8 +197,8 @@ const CartFullPage = () => {
             // Passing props for potential sync, though sidebar might need own copy or shared state
             customLogic={{
               comment, setComment,
-              selectedCoords, setSelectedCoords,
-              addressText, setAddressText,
+              selectedCoords,
+              addressText,
               paymentMethod, setPaymentMethod,
               deliveryTime, setDeliveryTime,
               handleCreateOrder, orderLoading
@@ -272,42 +244,55 @@ const CartFullPage = () => {
       )}
 
       {/* Location Modal */}
-      <Modal
-        title={<Text className="text-[18px] font-black">Xaritadan tanlash</Text>}
+      <LocationModal
         open={isLocationModalOpen}
-        onCancel={() => setIsLocationModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsLocationModalOpen(false)} className="rounded-xl h-10 px-6">Bekor qilish</Button>,
-          <Button
-            key="submit"
-            type="primary"
-            disabled={!selectedCoords}
-            onClick={() => setIsLocationModalOpen(false)}
-            className="bg-[#FFD600] text-black border-none hover:bg-[#FFC800] rounded-xl h-10 px-8 font-black"
-          >
-            Tasdiqlash
-          </Button>
-        ]}
-        width={800}
+        onClose={() => setIsLocationModalOpen(false)}
+      />
+
+      {/* Confirmation Modal */}
+      <Modal
+        title={<Text className="text-[20px] font-black">Buyurtmani tasdiqlash</Text>}
+        open={isConfirmModalOpen}
+        onCancel={() => setIsConfirmModalOpen(false)}
+        footer={null}
+        width={450}
         centered
-        styles={{ body: { padding: 0 } }}
-        className="location-modal"
+        className="confirm-order-modal"
       >
-        <div className="h-[450px] w-full relative">
-          <YMaps query={{ apikey: 'fe54f19b-c408-41e7-8b01-925206263595', lang: 'ru_RU' }}>
-            <Map
-              defaultState={{ center: GALLAOROL_COORDS, zoom: 14 }}
-              width="100%"
-              height="100%"
-              onClick={handleMapClick}
+        <div className="space-y-6 pt-2">
+          <div className="bg-gray-50 p-5 rounded-[24px] space-y-4">
+            <div>
+              <Text className="text-[12px] text-gray-400 font-bold uppercase block mb-1">Yetkazib berish manzili</Text>
+              <Text className="text-[16px] font-bold text-[#111] block leading-snug">
+                {addressText}
+              </Text>
+            </div>
+            
+            <div className="h-px bg-gray-200" />
+            
+            <div className="flex items-center justify-between">
+              <Text className="text-[17px] font-bold text-[#111]">Umumiy summa:</Text>
+              <Text className="text-[20px] font-black text-[#111]">{fmt(subtotal)} <span className="text-[12px]">UZS</span></Text>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleConfirmOrder}
+              disabled={orderLoading}
+              className="w-full bg-[#FFD600] active:scale-[0.98] transition-all rounded-[20px] py-4 flex items-center justify-center gap-3 shadow-[0_8px_20px_rgba(255,214,0,0.25)] border-b-4 border-[#E6C000]"
             >
-              <ZoomControl options={{ size: 'small' }} />
-              <GeolocationControl options={{ float: 'left' }} />
-              <FullscreenControl />
-              <SearchControl options={{ float: 'right' }} />
-              {selectedCoords && <Placemark geometry={selectedCoords} options={{ preset: 'islands#yellowDotIcon' }} />}
-            </Map>
-          </YMaps>
+              <span className="text-[17px] font-black text-black">
+                {orderLoading ? 'YUBORILMOQDA...' : 'TASDIQLASH VA BUYURTMA BERISH'}
+              </span>
+            </button>
+            <button
+              onClick={() => setIsConfirmModalOpen(false)}
+              className="w-full py-3 text-[15px] font-black text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              BEKOR QILISH
+            </button>
+          </div>
         </div>
       </Modal>
 
@@ -318,9 +303,10 @@ const CartFullPage = () => {
               color: #111 !important;
               padding-left: 0 !important;
           }
-           .location-modal .ant-modal-content {
+           .location-modal .ant-modal-content, .confirm-order-modal .ant-modal-content {
                 overflow: hidden;
-                border-radius: 28px;
+                border-radius: 32px;
+                padding: 24px !important;
             }
       `}</style>
     </div>
@@ -328,7 +314,3 @@ const CartFullPage = () => {
 }
 
 export default CartFullPage
-
-
-
-
